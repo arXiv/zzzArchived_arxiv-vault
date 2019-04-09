@@ -17,7 +17,8 @@ class TestGetSecretsNotAuthenticated(TestCase):
 
     def test_generic_request(self):
         """The app requires a generic secret."""
-        requests = [{'type': 'generic', 'name': 'GENERIC_FOO', 'key': 'foo'}]
+        requests = [{'type': 'generic', 'name': 'GENERIC_FOO', 'path': 'baz',
+                     'key': 'foo'}]
         self.vault.generic.return_value = Secret('foosecret',
                                                  datetime.now(UTC),
                                                  'foolease-1234', 1234, True)
@@ -38,7 +39,8 @@ class TestGetSecrets(TestCase):
 
     def test_generic_request(self):
         """The app requires a generic secret."""
-        requests = [{'type': 'generic', 'name': 'GENERIC_FOO', 'key': 'foo'}]
+        requests = [{'type': 'generic', 'name': 'GENERIC_FOO', 'path': 'baz',
+                     'key': 'foo'}]
         self.vault.generic.return_value = Secret('foosecret',
                                                  datetime.now(UTC),
                                                  'foolease-1234', 1234, True)
