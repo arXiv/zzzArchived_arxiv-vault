@@ -4,6 +4,7 @@ from typing import Callable, Dict, Tuple, Iterable, List, Optional, Mapping
 from datetime import datetime, timedelta
 from pytz import UTC
 from functools import partial
+import os
 
 import logging
 
@@ -60,7 +61,11 @@ class VaultMiddleware:
     @property
     def token(self) -> str:
         """Kubernetes token."""
-        return str(self.config['KUBE_TOKEN'])
+        tok = str(self.config['KUBE_TOKEN'])
+        if os.path.exists(tok):     # May be a path to the token on disk.
+            with open(tok) as f:
+                return f.read()
+        return tok
 
     @property
     def role(self) -> str:
