@@ -11,7 +11,7 @@ coveralls = "*"
 pylint = "*"
 pydocstyle = "*"
 mypy = "*"
-arxiv-base = {path = "./../arxiv-base-ui"}
+arxiv-base = "==0.15.4rc1"
 
 [packages]
 hvac = "*"
