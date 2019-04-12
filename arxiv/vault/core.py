@@ -87,7 +87,8 @@ class Vault:
 
         """
         self._client = Client(url=f'{scheme}://{host}:{port}',
-                              adapter=HostnameLiberalAdapter)
+                              adapter=HostnameLiberalAdapter,
+                              verify=verify)
 
     @property
     def client(self) -> hvac.v1.Client:
@@ -131,10 +132,12 @@ class Vault:
             raise RuntimeError('Could not use response') from e
         return secret
 
-    def generic(self, path: str, key: str) -> Secret:
+    def generic(self, path: str, key: str,
+                mount_point: str = 'secret/') -> Secret:
         """Get a generic secret value by key."""
-        data = self._client.secrets.kv.v2.read_secret_version(path=key)['data']
-        return Secret(data['data']['key'],
+        method = self._client.secrets.kv.v2.read_secret_version
+        data = method(path=path, mount_point=mount_point)['data']
+        return Secret(data['data'][key],
                       datetime.now(UTC),
                       data['lease_id'],
                       data['lease_duration'],
@@ -171,9 +174,9 @@ class Vault:
         try:
             aws_access_key_id = data['data']['access_key']
             aws_secret_access_key = data['data']['secret_key']
-            lease_id = data['data']['lease_id']
-            lease_duration = data['data']['lease_duration']
-            renewable = data['data']['renewable']
+            lease_id = data['lease_id']
+            lease_duration = data['lease_duration']
+            renewable = data['renewable']
         except KeyError as e:
             raise RuntimeError('Could not use response') from e
         return Secret((aws_access_key_id, aws_secret_access_key),

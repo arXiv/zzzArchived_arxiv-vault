@@ -103,7 +103,8 @@ class SecretsManager:
             else:
                 raise NotImplementedError('No other database engine available')
         elif request['type'] == 'generic':
-            secret = self.vault.generic(request['path'], request['key'])
+            secret = self.vault.generic(request['path'], request['key'],
+                                        request['mount_point'])
         return secret
 
     def yield_secrets(self, tok: str, role: str) -> Iterable[Tuple[str, str]]:
