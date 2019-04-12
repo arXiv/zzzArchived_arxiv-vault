@@ -9,6 +9,7 @@ from json.decoder import JSONDecodeError
 
 import hvac
 from .hvac_extensions import Client
+from .adapter import HostnameLiberalAdapter
 
 import logging
 logger = logging.getLogger(__name__)
@@ -85,7 +86,8 @@ class Vault:
             path to a certificate bundle used to verify the server certificate.
 
         """
-        self._client = Client(url=f'{scheme}://{host}:{port}')
+        self._client = Client(url=f'{scheme}://{host}:{port}',
+                              adapter=HostnameLiberalAdapter)
 
     @property
     def client(self) -> hvac.v1.Client:
