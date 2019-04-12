@@ -49,9 +49,11 @@ class VaultMiddleware:
         self.config = config
         host = self.config['VAULT_HOST']
         port = self.config['VAULT_PORT']
+        cert = self.config['VAULT_CERT']
+
         scheme = self.config.get('VAULT_SCHEME', 'https')
 
-        self.vault = Vault(host, port, scheme)
+        self.vault = Vault(host, port, scheme, verify=cert)
         logger.debug('New Vault connection at %s://%s:%s', host, port, scheme)
 
         self.requests = config.get('VAULT_REQUESTS', [])

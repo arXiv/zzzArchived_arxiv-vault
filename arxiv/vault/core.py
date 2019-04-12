@@ -1,6 +1,6 @@
 """Provides simple Vault API client."""
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 from pytz import UTC
 from datetime import datetime, timedelta
 from http import HTTPStatus
@@ -66,7 +66,8 @@ class Vault:
 
     kubernetes_mountpoint = 'kubernetes'
 
-    def __init__(self, host: str, port: str, scheme: str = 'https') -> None:
+    def __init__(self, host: str, port: str, scheme: str = 'https',
+                 verify: Union[bool, str] = True) -> None:
         """
         Configure a connection to Vault.
 
@@ -78,6 +79,10 @@ class Vault:
             Vault API port number.
         scheme : str
             Default is `https`.
+        verify : bool or str
+            Passed to client constructor (see :class:`hvac.v1.Client`). If a
+            bool, toggles SSL certificate verification. If a str, should be a
+            path to a certificate bundle used to verify the server certificate.
 
         """
         self._client = Client(url=f'{scheme}://{host}:{port}')

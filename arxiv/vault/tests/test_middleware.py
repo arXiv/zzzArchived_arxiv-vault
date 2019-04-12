@@ -30,6 +30,7 @@ class TestMiddleware(TestCase):
         self.app = Flask(__name__)
         self.app.config['VAULT_HOST'] = 'foohost'
         self.app.config['VAULT_PORT'] = '1234'
+        self.app.config['VAULT_CERT'] = '/path/to/cert'
         self.app.config['VAULT_REQUESTS'] = {
             'type': 'generic',
             'name': 'JWT_SECRET',
