@@ -136,8 +136,8 @@ class Vault:
                 mount_point: str = 'secret/') -> Secret:
         """Get a generic secret value by key."""
         method = self._client.secrets.kv.v2.read_secret_version
-        data = method(path=path, mount_point=mount_point)['data']
-        return Secret(data['data'][key],
+        data = method(path=path, mount_point=mount_point)
+        return Secret(data['data']['data'][key],
                       datetime.now(UTC),
                       data['lease_id'],
                       data['lease_duration'],
