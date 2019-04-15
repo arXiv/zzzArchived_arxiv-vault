@@ -12,6 +12,7 @@ pylint = "*"
 pydocstyle = "*"
 mypy = "*"
 arxiv-base = "==0.15.4rc1"
+wheel = "*"
 
 [packages]
 hvac = "*"
