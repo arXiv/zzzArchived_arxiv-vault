@@ -17,8 +17,14 @@ class TestGetSecretsNotAuthenticated(TestCase):
 
     def test_generic_request(self):
         """The app requires a generic secret."""
-        requests = [{'type': 'generic', 'name': 'GENERIC_FOO', 'path': 'baz',
-                     'key': 'foo', 'mount_point': 'foo/'}]
+        requests = [
+            manager.SecretRequest.factory('generic', **{
+                'name': 'GENERIC_FOO',
+                'path': 'baz',
+                'key': 'foo',
+                'mount_point': 'foo/'
+            })
+        ]
         self.vault.generic.return_value = Secret('foosecret',
                                                  datetime.now(UTC),
                                                  'foolease-1234', 1234, True)
@@ -39,8 +45,14 @@ class TestGetSecrets(TestCase):
 
     def test_generic_request(self):
         """The app requires a generic secret."""
-        requests = [{'type': 'generic', 'name': 'GENERIC_FOO', 'path': 'baz',
-                     'key': 'foo', 'mount_point': 'foo/'}]
+        requests = [
+            manager.SecretRequest.factory('generic', **{
+                'name': 'GENERIC_FOO',
+                'path': 'baz',
+                'key': 'foo',
+                'mount_point': 'foo/'
+            })
+        ]
         self.vault.generic.return_value = Secret('foosecret',
                                                  datetime.now(UTC),
                                                  'foolease-1234', 1234, True)
@@ -63,7 +75,7 @@ class TestGetSecrets(TestCase):
         secrets.secrets['GENERIC_FOO'].lease_duration \
             = secrets.expiry_margin.total_seconds() - 5
         self.assertTrue(
-            secrets.about_to_expire(secrets.secrets['GENERIC_FOO']),
+            secrets._about_to_expire(secrets.secrets['GENERIC_FOO']),
             '...the secret lease is about to expire...'
         )
         yields = {k: v for k, v in secrets.yield_secrets('tôken', 'röle')}
@@ -72,8 +84,12 @@ class TestGetSecrets(TestCase):
 
     def test_aws_request(self):
         """The app requires an AWS credential."""
-        requests = [{'type': 'aws', 'name': 'FOO_CREDENTIALS',
-                     'role': 'write-foo-s3'}]
+        requests = [
+            manager.SecretRequest.factory('aws', **{
+                'name': 'FOO_CREDENTIALS',
+                'role': 'write-foo-s3'
+            })
+        ]
         self.vault.aws.return_value = Secret(('fookeyid', 'foosecret'),
                                              datetime.now(UTC),
                                              'foolease-1234', 1234, True)
@@ -96,7 +112,7 @@ class TestGetSecrets(TestCase):
         secrets.secrets['FOO_CREDENTIALS'].lease_duration \
             = secrets.expiry_margin.total_seconds() - 5
         self.assertTrue(
-            secrets.about_to_expire(secrets.secrets['FOO_CREDENTIALS']),
+            secrets._about_to_expire(secrets.secrets['FOO_CREDENTIALS']),
             '...the secret lease is about to expire...'
         )
         yields = {k: v for k, v in secrets.yield_secrets('tôken', 'röle')}
@@ -105,10 +121,18 @@ class TestGetSecrets(TestCase):
 
     def test_mysql_credentials(self):
         """The app requires a MySQL credential."""
-        requests = [{'type': 'database', 'name': 'FOO_DATABASE_URI',
-                     'engine': manager.MYSQLDB, 'endpoint': 'foo-database-dev',
-                     'role': 'foo-reader', 'host': 'fooserver', 'port': '3306',
-                     'database': 'foodb', 'params': 'charset=utf8mb4'}]
+        requests = [
+            manager.SecretRequest.factory('database', **{
+                'name': 'FOO_DATABASE_URI',
+                'engine': manager.MYSQL + '+mysqldb',
+                'endpoint': 'foo-database-dev',
+                'role': 'foo-db-role',
+                'host': 'fooserver',
+                'port': '3306',
+                'database': 'foodb',
+                'params': 'charset=utf8mb4'
+            })
+        ]
         self.vault.mysql.return_value = Secret(('user', 'pass'),
                                                datetime.now(UTC),
                                                'foolease-1234', 1234, True)
@@ -136,7 +160,7 @@ class TestGetSecrets(TestCase):
                                                datetime.now(UTC),
                                                'foolease-1234', 1234, True)
         self.assertTrue(
-            secrets.about_to_expire(secrets.secrets['FOO_DATABASE_URI']),
+            secrets._about_to_expire(secrets.secrets['FOO_DATABASE_URI']),
             '...the secret lease is about to expire...'
         )
         yields = {k: v for k, v in secrets.yield_secrets('tôken', 'röle')}

@@ -1,6 +1,7 @@
 """Provides :class:`.SecretsManager`."""
 
-from typing import List, Dict, Tuple, Iterable
+from typing import List, Dict, Tuple, Iterable, Optional
+from dataclasses import dataclass
 
 from datetime import datetime, timedelta
 from pytz import UTC
@@ -12,7 +13,80 @@ from .core import Vault, Secret
 logger = logging.getLogger(__name__)
 logger.propagate = False
 
-MYSQLDB = 'mysql+mysqldb'
+MYSQL = 'mysql'
+
+
+@dataclass
+class SecretRequest:
+    """Represents a request for a secret from Vault."""
+
+    name: str
+
+    @classmethod
+    def factory(cls, request_type: str, **data: str) -> 'SecretRequest':
+        """Genereate a request of the appropriate type."""
+        for klass in cls.__subclasses__():
+            if klass.slug == request_type:
+                return klass(**data)
+        raise ValueError('No such request type')
+
+
+@dataclass
+class AWSSecretRequest(SecretRequest):
+    """Represents a request for AWS credentials."""
+
+    slug = "aws"
+
+    role: str
+    """An AWS role that has been pre-configured with IAM policies in Vault."""
+
+
+@dataclass
+class DatabaseSecretRequest(SecretRequest):
+    """Represents a request for database credentials."""
+
+    slug = "database"
+
+    endpoint: str
+    """Name of the Vault database secrets endpoint."""
+
+    role: str
+    """Name of the database role for which to obtain credentials."""
+
+    engine: str
+    """
+    Database dialect for which secret is required, e.g. ``mysql+mysqldb``.
+
+    See https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls
+    """
+
+    host: str
+    """Hostname of the database server."""
+
+    port: str
+    """Port number of the database server."""
+
+    database: str
+    """Name of the database."""
+
+    params: str
+    """Param-part of the database URI connection string."""
+
+
+@dataclass
+class GenericSecretRequest(SecretRequest):
+    """Represents a request for a generic (kv) secret."""
+
+    slug = "generic"
+
+    mount_point: str
+    """Mount point of the KV engine."""
+
+    path: str
+    """Path to the secret."""
+
+    key: str
+    """Key within the secret."""
 
 
 class SecretsManager:
@@ -32,49 +106,15 @@ class SecretsManager:
     A request is a description of the secret that is desired and (depending on
     its type) the form in which it should be returned.
 
-    AWS
-    ===
-    - ``'type': 'aws'``
-    - ``'role': 'name-of-preconfigured-aws-policy-role'``
+    Should be one of:
 
-    Example:
-
-    ```python
-    manager.requests.append({
-        'type': 'aws',
-        'role': 'coolapp-write-s3-cooldata'
-    })
-
-    for key, value in manager.yield_secrets('sometoken'):
-        print(key, value)
-    # AWS_ACCESS_KEY_ID asdf12345
-    # AWS_SECRET_ACCESS_KEY qwertyuiiop!@#6789
-    ```
-
-    Database
-    ========
-    Returns a full database URI with auth info.
-
-    - ``'type': 'database'``
-    - ``'name': 'DATABASE_URI'``
-    - ``'endpoint': 'vault-database-endpoint-name'``
-    - ``'role': 'read-data-role'``
-    - ``'engine': 'engine-name'`` (e.g. ``mysql+mysqldb``)
-    - ``'host': 'some-database-server'``
-    - ``'port': '3306'``
-    - ``'database': 'some-database'``
-    - ``'params': 'charset=utf8mb4'``
-
-    Generic
-    =======
-    - ``'type': 'generic'``
-    - ``'name': 'SOME_SECRET'``
-    - ``'path': 'some-path-to-a-secret'``
-    - ``'key': 'key-for-the-secret'``
+    - :class:`.AWSSecretRequest`
+    - :class:`.DatabaseSecretRequest`
+    - :class:`.GenericSecretRequest`
 
     """
 
-    def __init__(self, vault: Vault, requests: List[Dict[str, str]],
+    def __init__(self, vault: Vault, requests: List[SecretRequest],
                  expiry_margin: int = 300) -> None:
         """Initialize a new manager with :class:`.Vault` connection."""
         self.vault = vault
@@ -82,29 +122,44 @@ class SecretsManager:
         self.secrets: Dict[str, Secret] = {}
         self.expiry_margin = timedelta(seconds=expiry_margin)
 
-    def about_to_expire(self, secret: Secret) -> bool:
+    def _about_to_expire(self, secret: Secret) -> bool:
         """Check if a secret is about to expire within `margin` seconds."""
         return secret.is_expired(datetime.now(UTC) + self.expiry_margin)
 
-    def format_database(self, request: Dict[str, str], secret: Secret) -> str:
+    def _format_database(self, request: DatabaseSecretRequest,
+                         secret: Secret) -> str:
         """Format a database secret."""
         username, password = secret.value
-        return f'{request["engine"]}://{username}:{password}@' \
-               f'{request["host"]}:{request["port"]}/{request["database"]}?' \
-               f'{request["params"]}'
+        return f'{request.engine}://{username}:{password}@' \
+               f'{request.host}:{request.port}/{request.database}?' \
+               f'{request.params}'
 
-    def fresh_secret(self, request: Dict[str, str]) -> Secret:
+    def _fresh_secret(self, request: SecretRequest) -> Secret:
         """Get a brand new secret."""
-        if request['type'] == 'aws':
-            secret = self.vault.aws(request['role'])
-        elif request['type'] == 'database':
-            if request['engine'] == MYSQLDB:
-                secret = self.vault.mysql(request['role'], request['endpoint'])
+        if type(request) is AWSSecretRequest:
+            secret = self.vault.aws(request.role)
+        elif type(request) is DatabaseSecretRequest:
+            if request.engine.split('+', 1)[0] == MYSQL:
+                secret = self.vault.mysql(request.role, request.endpoint)
             else:
                 raise NotImplementedError('No other database engine available')
-        elif request['type'] == 'generic':
-            secret = self.vault.generic(request['path'], request['key'],
-                                        request['mount_point'])
+        elif type(request) is GenericSecretRequest:
+            secret = self.vault.generic(request.path, request.key,
+                                        request.mount_point)
+        return secret
+
+    def _is_stale(self, secret: Optional[Secret]) -> bool:
+        """Determine whether or not a secret requires renewal."""
+        return secret is None or secret.is_expired()
+
+    def _get_secret(self, request: SecretRequest) -> Secret:
+        """Get a secret for a :class:`.SecretRequest`."""
+        secret = self.secrets.get(request.name, None)
+        if self._is_stale(secret):
+            secret = self._fresh_secret(request)
+        elif self._about_to_expire(secret):
+            secret = self.vault.renew(secret)
+        self.secrets[request.name] = secret
         return secret
 
     def yield_secrets(self, tok: str, role: str) -> Iterable[Tuple[str, str]]:
@@ -114,18 +169,11 @@ class SecretsManager:
             self.vault.authenticate(tok, role)
 
         for request in self.requests:
-            name = request['name']
-            secret = self.secrets.get(name, None)
-            if secret is None or secret.is_expired():
-                logger.debug('Secret %s is expired', name)
-                secret = self.fresh_secret(request)
-            elif self.about_to_expire(secret):
-                secret = self.vault.renew(secret)
-            self.secrets[name] = secret
-            if request['type'] == 'aws':
+            secret = self._get_secret(request)
+            if type(request) is AWSSecretRequest:
                 yield 'AWS_ACCESS_KEY_ID', secret.value[0]
                 yield 'AWS_SECRET_ACCESS_KEY', secret.value[1]
-            elif request['type'] == 'database':
-                yield name, self.format_database(request, secret)
-            elif request['type'] == 'generic':
-                yield name, secret.value
+            elif type(request) is DatabaseSecretRequest:
+                yield request.name, self._format_database(request, secret)
+            elif type(request) is GenericSecretRequest:
+                yield request.name, secret.value

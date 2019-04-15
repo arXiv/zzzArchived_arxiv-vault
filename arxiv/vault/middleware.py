@@ -9,7 +9,7 @@ import os
 import logging
 
 from .core import Vault, Secret
-from .manager import SecretsManager
+from .manager import SecretsManager, SecretRequest
 
 WSGIRequest = Tuple[dict, Callable]
 
@@ -55,8 +55,7 @@ class VaultMiddleware:
 
         self.vault = Vault(host, port, scheme, verify=cert)
         logger.debug('New Vault connection at %s://%s:%s', host, port, scheme)
-
-        self.requests = config.get('VAULT_REQUESTS', [])
+        self.requests = self._get_requests(config)
         self.secrets = SecretsManager(self.vault, self.requests)
         self.wsgi_app = self
 
@@ -73,6 +72,13 @@ class VaultMiddleware:
     def role(self) -> str:
         """Vault role."""
         return str(self.config['VAULT_ROLE'])
+
+    def _get_requests(self, config: Mapping) -> List[SecretRequest]:
+        requests: List[SecretRequest] = []
+        for req_data in config.get('VAULT_REQUESTS', []):
+            req_type = req_data.pop('type')
+            requests.append(SecretRequest.factory(req_type, **req_data))
+        return requests
 
     def __call__(self, environ: dict, start_response: Callable) -> Iterable:
         """

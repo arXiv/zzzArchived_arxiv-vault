@@ -31,12 +31,13 @@ class TestMiddleware(TestCase):
         self.app.config['VAULT_HOST'] = 'foohost'
         self.app.config['VAULT_PORT'] = '1234'
         self.app.config['VAULT_CERT'] = '/path/to/cert'
-        self.app.config['VAULT_REQUESTS'] = {
+        self.app.config['VAULT_REQUESTS'] = [{
             'type': 'generic',
             'name': 'JWT_SECRET',
+            'mount_point': 'wherethesecretslive',
             'path': 'jwt',
             'key': 'secret'
-        }
+        }]
         self.app.config['VAULT_ROLE'] = 'foovaultrole'
         self.app.config['KUBE_TOKEN'] = 'fookubetoken1234'
         wrap(self.app, [middleware.VaultMiddleware])

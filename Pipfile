@@ -16,6 +16,7 @@ arxiv-base = "==0.15.4rc1"
 [packages]
 hvac = "*"
 arxiv-vault = {path = "."}
+dataclasses = "*"
 
 [requires]
 python_version = "3.6"
