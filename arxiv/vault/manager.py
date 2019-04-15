@@ -170,7 +170,10 @@ class SecretsManager:
         if self._is_stale(request, secret):
             secret = self._fresh_secret(request)
         elif self._about_to_expire(secret):
-            secret = self.vault.renew(secret)
+            if secret.renewable:
+                secret = self.vault.renew(secret)
+            else:
+                secret = self._fresh_secret(request)
         self.secrets[request.name] = secret
         return secret
 

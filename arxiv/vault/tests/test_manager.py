@@ -109,8 +109,39 @@ class TestGetSecrets(TestCase):
 
         time.sleep(2)
         yields = {k: v for k, v in secrets.yield_secrets('tôken', 'röle')}
+        self.assertEqual(self.vault.renew.call_count, 1)
         self.assertEqual(self.vault.generic.call_count, 2,
                          '...the minimum TTL has passed.')
+
+    def test_generic_request_nonrenewable(self):
+        """The app requires a generic secret that is not renewable."""
+        requests = [
+            manager.SecretRequest.factory('generic', **{
+                'name': 'GENERIC_FOO',
+                'path': 'baz',
+                'key': 'foo',
+                'mount_point': 'foo/'
+            })
+        ]
+        self.vault.generic.return_value = Secret('foosecret',
+                                                 datetime.now(UTC),
+                                                 'foolease-1234', 1234, False)
+        secrets = manager.SecretsManager(self.vault, requests)
+
+        yields = {k: v for k, v in secrets.yield_secrets('tôken', 'röle')}
+        self.assertEqual(yields['GENERIC_FOO'], 'foosecret')
+        self.assertEqual(self.vault.generic.call_count, 1)
+
+        yields = {k: v for k, v in secrets.yield_secrets('tôken', 'röle')}
+        self.assertEqual(self.vault.generic.call_count, 1)
+
+        secrets.secrets['GENERIC_FOO'].lease_duration = 0
+        self.assertTrue(secrets.secrets['GENERIC_FOO'].is_expired())
+        yields = {k: v for k, v in secrets.yield_secrets('tôken', 'röle')}
+        self.assertEqual(self.vault.renew.call_count, 0,
+                         'The secret is not renewed.')
+        self.assertEqual(self.vault.generic.call_count, 2,
+                         'The secret is retrieved de novo.')
 
     def test_aws_request(self):
         """The app requires an AWS credential."""
