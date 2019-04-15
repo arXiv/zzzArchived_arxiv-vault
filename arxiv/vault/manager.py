@@ -88,6 +88,9 @@ class GenericSecretRequest(SecretRequest):
     key: str
     """Key within the secret."""
 
+    minimum_ttl: int = 0
+    """Renewal will be attempted no more frequently than ``minimum_ttl``."""
+
 
 class SecretsManager:
     """
@@ -148,14 +151,23 @@ class SecretsManager:
                                         request.mount_point)
         return secret
 
-    def _is_stale(self, secret: Optional[Secret]) -> bool:
+    def _can_freshen(self, request: SecretRequest, secret: Secret) -> bool:
+        """Enforce minimum TTL."""
+        if not hasattr(request, 'minimum_ttl'):
+            return True
+        age = (datetime.now(UTC) - secret.issued).total_seconds()
+        return age >= request.minimum_ttl
+
+    def _is_stale(self, request: SecretRequest,
+                  secret: Optional[Secret]) -> bool:
         """Determine whether or not a secret requires renewal."""
-        return secret is None or secret.is_expired()
+        return secret is None or \
+            (secret.is_expired() and self._can_freshen(request, secret))
 
     def _get_secret(self, request: SecretRequest) -> Secret:
         """Get a secret for a :class:`.SecretRequest`."""
         secret = self.secrets.get(request.name, None)
-        if self._is_stale(secret):
+        if self._is_stale(request, secret):
             secret = self._fresh_secret(request)
         elif self._about_to_expire(secret):
             secret = self.vault.renew(secret)

@@ -2,6 +2,7 @@
 
 from unittest import TestCase, mock
 from datetime import datetime
+import time
 from pytz import UTC
 
 from .. import manager
@@ -81,6 +82,35 @@ class TestGetSecrets(TestCase):
         yields = {k: v for k, v in secrets.yield_secrets('tôken', 'röle')}
         self.assertEqual(self.vault.renew.call_count, 1,
                          'in which case we attempt to renew the lease.')
+
+    def test_generic_request_with_minimum_ttl(self):
+        """The app requires a generic secret with a minimum TTL."""
+        requests = [
+            manager.SecretRequest.factory('generic', **{
+                'name': 'GENERIC_FOO',
+                'path': 'baz',
+                'key': 'foo',
+                'mount_point': 'foo/',
+                'minimum_ttl': 2
+            })
+        ]
+        secret = Secret('foosecret', datetime.now(UTC), 'lease-1234', 0, True)
+        self.vault.generic.return_value = secret
+        self.vault.renew.return_value = secret
+        secrets = manager.SecretsManager(self.vault, requests)
+
+        yields = {k: v for k, v in secrets.yield_secrets('tôken', 'röle')}
+        self.assertEqual(yields['GENERIC_FOO'], 'foosecret')
+        self.assertEqual(self.vault.generic.call_count, 1)
+
+        yields = {k: v for k, v in secrets.yield_secrets('tôken', 'röle')}
+        self.assertEqual(self.vault.generic.call_count, 1,
+                         'Vault is not called a second time, unless...')
+
+        time.sleep(2)
+        yields = {k: v for k, v in secrets.yield_secrets('tôken', 'röle')}
+        self.assertEqual(self.vault.generic.call_count, 2,
+                         '...the minimum TTL has passed.')
 
     def test_aws_request(self):
         """The app requires an AWS credential."""
