@@ -75,5 +75,6 @@ class VaultMiddleware:
         for key, value in self.secrets.yield_secrets():
             logger.debug('Got secret %s', key)
             environ[key] = value
+            self.config[key] = value
         response: Iterable = self.app(environ, start_response)
         return response
