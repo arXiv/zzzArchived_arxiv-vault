@@ -1,8 +1,8 @@
 """Provides :class:`.SecretsManager`."""
 
-from typing import List, Dict, Tuple, Iterable, Optional
+from typing import List, Dict, Tuple, Iterable, Optional, Mapping
 from dataclasses import dataclass
-
+import os
 from datetime import datetime, timedelta
 from pytz import UTC
 
@@ -195,3 +195,67 @@ class SecretsManager:
                 yield request.name, self._format_database(request, secret)
             elif type(request) is GenericSecretRequest:
                 yield request.name, secret.value
+
+
+class ConfigManager:
+    """
+    Manages access to secrets in Vault based on env-style configuration.
+
+    Config parameters:
+
+    - ``KUBE_TOKEN``, used to authenticate against the Kubernetes Auth
+      endpoint.
+    - ``VAULT_HOST``
+    - ``VAULT_PORT``
+    - ``VAULT_REQUESTS``; see :class:`.SecretsManager` for how these should be
+      expressed.
+    - ``VAULT_SCHEME`` (optional; defaults to 'https')
+
+    TODO: expand support for additional auth methods.
+    """
+
+    def __init__(self, config: Mapping) -> None:
+        """
+        Initialize a :class:`.Vault` connection.
+
+        Parameters
+        ----------
+        config : mapping
+            Configuration from which to obtain Vault parameters and requests.
+
+        """
+        self.config = config
+        host = self.config['VAULT_HOST']
+        port = self.config['VAULT_PORT']
+        cert = self.config['VAULT_CERT']
+
+        scheme = self.config.get('VAULT_SCHEME', 'https')
+        self.vault = Vault(host, port, scheme, verify=cert)
+        logger.debug('New Vault connection at %s://%s:%s', host, port, scheme)
+        self.requests = self._get_requests(config)
+        self.secrets = SecretsManager(self.vault, self.requests)
+
+    @property
+    def token(self) -> str:
+        """Kubernetes token."""
+        tok = str(self.config['KUBE_TOKEN'])
+        if os.path.exists(tok):     # May be a path to the token on disk.
+            with open(tok) as f:
+                return f.read()
+        return tok
+
+    @property
+    def role(self) -> str:
+        """Vault role."""
+        return str(self.config['VAULT_ROLE'])
+
+    def _get_requests(self, config: Mapping) -> List[SecretRequest]:
+        requests: List[SecretRequest] = []
+        for req_data in config.get('VAULT_REQUESTS', []):
+            req_type = req_data.pop('type')
+            requests.append(SecretRequest.factory(req_type, **req_data))
+        return requests
+
+    def yield_secrets(self) -> Iterable[Tuple[str, str]]:
+        """Yield secrets from the :class:`.SecretsManager`."""
+        return self.secrets.yield_secrets(self.token, self.role)

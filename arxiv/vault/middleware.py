@@ -9,7 +9,7 @@ import os
 import logging
 
 from .core import Vault, Secret
-from .manager import SecretsManager, SecretRequest
+from .manager import SecretsManager, SecretRequest, ConfigManager
 
 WSGIRequest = Tuple[dict, Callable]
 
@@ -36,49 +36,21 @@ class VaultMiddleware:
 
     def __init__(self, wsgi_app: Callable, config: Mapping = {}) -> None:
         """
-        Initialize a :class:`.Vault` connection.
+        Initialize a :class:`.Vault` connection using :class:`.ConfigManager`.
 
         Parameters
         ----------
         app : :class:`.Flask` or callable
             The application wrapped by this middleware. This might be an inner
             middleware, or the original :class:`.Flask` app itself.
+        config : mapping
+            Configuration from which to obtain Vault parameters and requests.
 
         """
         self.app = wsgi_app
         self.config = config
-        host = self.config['VAULT_HOST']
-        port = self.config['VAULT_PORT']
-        cert = self.config['VAULT_CERT']
-
-        scheme = self.config.get('VAULT_SCHEME', 'https')
-
-        self.vault = Vault(host, port, scheme, verify=cert)
-        logger.debug('New Vault connection at %s://%s:%s', host, port, scheme)
-        self.requests = self._get_requests(config)
-        self.secrets = SecretsManager(self.vault, self.requests)
+        self.secrets = ConfigManager(self.config)
         self.wsgi_app = self
-
-    @property
-    def token(self) -> str:
-        """Kubernetes token."""
-        tok = str(self.config['KUBE_TOKEN'])
-        if os.path.exists(tok):     # May be a path to the token on disk.
-            with open(tok) as f:
-                return f.read()
-        return tok
-
-    @property
-    def role(self) -> str:
-        """Vault role."""
-        return str(self.config['VAULT_ROLE'])
-
-    def _get_requests(self, config: Mapping) -> List[SecretRequest]:
-        requests: List[SecretRequest] = []
-        for req_data in config.get('VAULT_REQUESTS', []):
-            req_type = req_data.pop('type')
-            requests.append(SecretRequest.factory(req_type, **req_data))
-        return requests
 
     def __call__(self, environ: dict, start_response: Callable) -> Iterable:
         """
@@ -100,7 +72,7 @@ class VaultMiddleware:
 
         """
         logger.debug('Yield secrets from %s', self.secrets)
-        for key, value in self.secrets.yield_secrets(self.token, self.role):
+        for key, value in self.secrets.yield_secrets():
             logger.debug('Got secret %s', key)
             environ[key] = value
         response: Iterable = self.app(environ, start_response)

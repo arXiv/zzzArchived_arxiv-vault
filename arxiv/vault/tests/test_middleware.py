@@ -21,7 +21,7 @@ class TestMiddlewareMisconfigured(TestCase):
 class TestMiddleware(TestCase):
     """Test middleware with an app that is configured to use Vault."""
 
-    @mock.patch(f'{middleware.__name__}.SecretsManager')
+    @mock.patch(f'{middleware.__name__}.ConfigManager')
     def setUp(self, mock_SecretsManager):
         """We have a flask app."""
         self.manager = mock.MagicMock()
