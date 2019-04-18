@@ -4,6 +4,7 @@ from typing import List, Dict, Tuple, Iterable, Optional, Mapping
 from dataclasses import dataclass
 import os
 from datetime import datetime, timedelta
+import copy
 from pytz import UTC
 
 import logging
@@ -252,6 +253,7 @@ class ConfigManager:
     def _get_requests(self, config: Mapping) -> List[SecretRequest]:
         requests: List[SecretRequest] = []
         for req_data in config.get('VAULT_REQUESTS', []):
+            req_data = copy.deepcopy(req_data)
             req_type = req_data.pop('type')
             requests.append(SecretRequest.factory(req_type, **req_data))
         return requests
