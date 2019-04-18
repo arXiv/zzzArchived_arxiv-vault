@@ -177,7 +177,6 @@ class Vault:
         """
         method = self._client.secrets.mysql
         data = method.generate_credentials(role, mount_point=mount_point)
-        data = data['data']
         secret = (data['data']['username'], data['data']['password'])
         return Secret(secret,
                       datetime.now(UTC),
