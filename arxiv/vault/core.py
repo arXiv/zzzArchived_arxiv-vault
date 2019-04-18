@@ -134,7 +134,23 @@ class Vault:
 
     def generic(self, path: str, key: str,
                 mount_point: str = 'secret/') -> Secret:
-        """Get a generic secret value by key."""
+        """
+        Get a generic secret value by key.
+
+        Parameters
+        ----------
+        path : str
+            Path to the secret.
+        key : str
+            Key within the secret to retrieve.
+        mount_point : str
+            Path where the KV secrets engine is mounted.
+
+        Returns
+        -------
+        :class:`.Secret`
+
+        """
         method = self._client.secrets.kv.v2.read_secret_version
         data = method(path=path, mount_point=mount_point)
         return Secret(data['data']['data'][key],
@@ -144,7 +160,21 @@ class Vault:
                       data['renewable'])
 
     def mysql(self, role: str, mount_point: str) -> Secret:
-        """Get a MySQL secret."""
+        """
+        Get a MySQL secret.
+
+        Parameters
+        ----------
+        role : str
+            Name of the pre-configured database role registered with Vault.
+        mount_point : str
+            Path where the database secrets engine is mounted.
+
+        Returns
+        -------
+        :class:`.Secret`
+
+        """
         method = self._client.secrets.mysql
         data = method.generate_credentials(role, mount_point=mount_point)
         data = data['data']
@@ -155,7 +185,7 @@ class Vault:
                       data['lease_duration'],
                       data['renewable'])
 
-    def aws(self, role: str) -> Secret:
+    def aws(self, role: str, mount_point: str) -> Secret:
         """
         Obtain an AWS credential.
 
@@ -163,6 +193,8 @@ class Vault:
         ----------
         role : str
             Name of the pre-configured AWS policy role registered with Vault.
+        mount_point : str
+            Path where the AWS secrets engine is mounted.
 
         Returns
         -------
@@ -170,7 +202,10 @@ class Vault:
 
 
         """
-        data = self._client.secrets.aws.generate_credentials(name=role)
+        data = self._client.secrets.aws.generate_credentials(
+            name=role,
+            mount_point=mount_point
+        )
         try:
             aws_access_key_id = data['data']['access_key']
             aws_secret_access_key = data['data']['secret_key']

@@ -186,7 +186,7 @@ class TestGetSecrets(TestCase):
             manager.SecretRequest.factory('database', **{
                 'name': 'FOO_DATABASE_URI',
                 'engine': manager.MYSQL + '+mysqldb',
-                'endpoint': 'foo-database-dev',
+                'mount_point': 'foo-database-dev/',
                 'role': 'foo-db-role',
                 'host': 'fooserver',
                 'port': '3306',

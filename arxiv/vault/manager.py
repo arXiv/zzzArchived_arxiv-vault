@@ -40,15 +40,15 @@ class AWSSecretRequest(SecretRequest):
     role: str
     """An AWS role that has been pre-configured with IAM policies in Vault."""
 
+    mount_point: str = 'aws/'
+    """Path where the AWS secrets engine is mounted."""
+
 
 @dataclass
 class DatabaseSecretRequest(SecretRequest):
     """Represents a request for database credentials."""
 
     slug = "database"
-
-    endpoint: str
-    """Name of the Vault database secrets endpoint."""
 
     role: str
     """Name of the database role for which to obtain credentials."""
@@ -72,6 +72,9 @@ class DatabaseSecretRequest(SecretRequest):
     params: str
     """Param-part of the database URI connection string."""
 
+    mount_point: str = 'database/'
+    """Path where the database secrets engine is mounted."""
+
 
 @dataclass
 class GenericSecretRequest(SecretRequest):
@@ -79,14 +82,14 @@ class GenericSecretRequest(SecretRequest):
 
     slug = "generic"
 
-    mount_point: str
-    """Mount point of the KV engine."""
-
     path: str
     """Path to the secret."""
 
     key: str
     """Key within the secret."""
+
+    mount_point: str = 'secret/'
+    """Mount point of the KV engine."""
 
     minimum_ttl: int = 0
     """Renewal will be attempted no more frequently than ``minimum_ttl``."""
@@ -140,10 +143,10 @@ class SecretsManager:
     def _fresh_secret(self, request: SecretRequest) -> Secret:
         """Get a brand new secret."""
         if type(request) is AWSSecretRequest:
-            secret = self.vault.aws(request.role)
+            secret = self.vault.aws(request.role, request.mount_point)
         elif type(request) is DatabaseSecretRequest:
             if request.engine.split('+', 1)[0] == MYSQL:
-                secret = self.vault.mysql(request.role, request.endpoint)
+                secret = self.vault.mysql(request.role, request.mount_point)
             else:
                 raise NotImplementedError('No other database engine available')
         elif type(request) is GenericSecretRequest:
