@@ -11,7 +11,7 @@ coveralls = "*"
 pylint = "*"
 pydocstyle = "*"
 mypy = "*"
-arxiv-base = "==0.15.4rc1"
+arxiv-base = "==0.15.6"
 wheel = "*"
 sphinx = "*"
 
