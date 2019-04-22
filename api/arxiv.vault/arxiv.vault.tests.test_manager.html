@@ -1,0 +1,181 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>arxiv.vault.tests.test_manager module &#8212; arXiv Vault Integration 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="arxiv.vault.tests.test_middleware module" href="arxiv.vault.tests.test_middleware.html" />
+    <link rel="prev" title="arxiv.vault.tests package" href="arxiv.vault.tests.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-arxiv.vault.tests.test_manager">
+<span id="arxiv-vault-tests-test-manager-module"></span><h1>arxiv.vault.tests.test_manager module<a class="headerlink" href="#module-arxiv.vault.tests.test_manager" title="Permalink to this headline">¶</a></h1>
+<p>Tests for <a class="reference internal" href="arxiv.vault.manager.html#module-arxiv.vault.manager" title="arxiv.vault.manager"><code class="xref py py-mod docutils literal notranslate"><span class="pre">manager</span></code></a>.</p>
+<dl class="class">
+<dt id="arxiv.vault.tests.test_manager.TestGetSecrets">
+<em class="property">class </em><code class="descclassname">arxiv.vault.tests.test_manager.</code><code class="descname">TestGetSecrets</code><span class="sig-paren">(</span><em>methodName='runTest'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/tests/test_manager.html#TestGetSecrets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.tests.test_manager.TestGetSecrets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">unittest.case.TestCase</span></code></p>
+<p>We use a <a class="reference internal" href="arxiv.vault.manager.html#arxiv.vault.manager.SecretsManager" title="arxiv.vault.manager.SecretsManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">SecretsManager</span></code></a> to grab Vault secrets.</p>
+<dl class="method">
+<dt id="arxiv.vault.tests.test_manager.TestGetSecrets.setUp">
+<code class="descname">setUp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/tests/test_manager.html#TestGetSecrets.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.tests.test_manager.TestGetSecrets.setUp" title="Permalink to this definition">¶</a></dt>
+<dd><p>We have a <a class="reference internal" href="arxiv.vault.core.html#arxiv.vault.core.Vault" title="arxiv.vault.core.Vault"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vault</span></code></a> connection and are authenticated.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="arxiv.vault.tests.test_manager.TestGetSecrets.test_aws_request">
+<code class="descname">test_aws_request</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/tests/test_manager.html#TestGetSecrets.test_aws_request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.tests.test_manager.TestGetSecrets.test_aws_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>The app requires an AWS credential.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="arxiv.vault.tests.test_manager.TestGetSecrets.test_generic_request">
+<code class="descname">test_generic_request</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/tests/test_manager.html#TestGetSecrets.test_generic_request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.tests.test_manager.TestGetSecrets.test_generic_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>The app requires a generic secret.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="arxiv.vault.tests.test_manager.TestGetSecrets.test_generic_request_nonrenewable">
+<code class="descname">test_generic_request_nonrenewable</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/tests/test_manager.html#TestGetSecrets.test_generic_request_nonrenewable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.tests.test_manager.TestGetSecrets.test_generic_request_nonrenewable" title="Permalink to this definition">¶</a></dt>
+<dd><p>The app requires a generic secret that is not renewable.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="arxiv.vault.tests.test_manager.TestGetSecrets.test_generic_request_with_minimum_ttl">
+<code class="descname">test_generic_request_with_minimum_ttl</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/tests/test_manager.html#TestGetSecrets.test_generic_request_with_minimum_ttl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.tests.test_manager.TestGetSecrets.test_generic_request_with_minimum_ttl" title="Permalink to this definition">¶</a></dt>
+<dd><p>The app requires a generic secret with a minimum TTL.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="arxiv.vault.tests.test_manager.TestGetSecrets.test_mysql_credentials">
+<code class="descname">test_mysql_credentials</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/tests/test_manager.html#TestGetSecrets.test_mysql_credentials"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.tests.test_manager.TestGetSecrets.test_mysql_credentials" title="Permalink to this definition">¶</a></dt>
+<dd><p>The app requires a MySQL credential.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="arxiv.vault.tests.test_manager.TestGetSecretsNotAuthenticated">
+<em class="property">class </em><code class="descclassname">arxiv.vault.tests.test_manager.</code><code class="descname">TestGetSecretsNotAuthenticated</code><span class="sig-paren">(</span><em>methodName='runTest'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/tests/test_manager.html#TestGetSecretsNotAuthenticated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.tests.test_manager.TestGetSecretsNotAuthenticated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">unittest.case.TestCase</span></code></p>
+<p>We use a <a class="reference internal" href="arxiv.vault.manager.html#arxiv.vault.manager.SecretsManager" title="arxiv.vault.manager.SecretsManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">SecretsManager</span></code></a> to grab Vault secrets.</p>
+<dl class="method">
+<dt id="arxiv.vault.tests.test_manager.TestGetSecretsNotAuthenticated.setUp">
+<code class="descname">setUp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/tests/test_manager.html#TestGetSecretsNotAuthenticated.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.tests.test_manager.TestGetSecretsNotAuthenticated.setUp" title="Permalink to this definition">¶</a></dt>
+<dd><p>We have a <a class="reference internal" href="arxiv.vault.core.html#arxiv.vault.core.Vault" title="arxiv.vault.core.Vault"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vault</span></code></a> connection and are not authenticated.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="arxiv.vault.tests.test_manager.TestGetSecretsNotAuthenticated.test_generic_request">
+<code class="descname">test_generic_request</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/tests/test_manager.html#TestGetSecretsNotAuthenticated.test_generic_request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.tests.test_manager.TestGetSecretsNotAuthenticated.test_generic_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>The app requires a generic secret.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">arXiv Vault Integration</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">arxiv</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="arxiv.vault.html">arxiv.vault package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">arxiv</a><ul>
+  <li><a href="arxiv.vault.html">arxiv.vault package</a><ul>
+  <li><a href="arxiv.vault.tests.html">arxiv.vault.tests package</a><ul>
+      <li>Previous: <a href="arxiv.vault.tests.html" title="previous chapter">arxiv.vault.tests package</a></li>
+      <li>Next: <a href="arxiv.vault.tests.test_middleware.html" title="next chapter">arxiv.vault.tests.test_middleware module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, arXiv-NG Team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/api/arxiv.vault/arxiv.vault.tests.test_manager.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

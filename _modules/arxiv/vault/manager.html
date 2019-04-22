@@ -1,0 +1,366 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>arxiv.vault.manager &#8212; arXiv Vault Integration 0.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for arxiv.vault.manager</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Provides :class:`.SecretsManager`.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="k">import</span> <span class="n">dataclass</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">from</span> <span class="nn">pytz</span> <span class="k">import</span> <span class="n">UTC</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">.core</span> <span class="k">import</span> <span class="n">Vault</span><span class="p">,</span> <span class="n">Secret</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">propagate</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="n">MYSQL</span> <span class="o">=</span> <span class="s1">&#39;mysql&#39;</span>
+
+
+<div class="viewcode-block" id="SecretRequest"><a class="viewcode-back" href="../../../api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.SecretRequest">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">SecretRequest</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Represents a request for a secret from Vault.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+
+<div class="viewcode-block" id="SecretRequest.factory"><a class="viewcode-back" href="../../../api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.SecretRequest.factory">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">factory</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">request_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">data</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SecretRequest&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Genereate a request of the appropriate type.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">klass</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">klass</span><span class="o">.</span><span class="n">slug</span> <span class="o">==</span> <span class="n">request_type</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">klass</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No such request type&#39;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="AWSSecretRequest"><a class="viewcode-back" href="../../../api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.AWSSecretRequest">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">AWSSecretRequest</span><span class="p">(</span><span class="n">SecretRequest</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Represents a request for AWS credentials.&quot;&quot;&quot;</span>
+
+    <span class="n">slug</span> <span class="o">=</span> <span class="s2">&quot;aws&quot;</span>
+
+    <span class="n">role</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="sd">&quot;&quot;&quot;An AWS role that has been pre-configured with IAM policies in Vault.&quot;&quot;&quot;</span>
+
+    <span class="n">mount_point</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;aws/&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Path where the AWS secrets engine is mounted.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="DatabaseSecretRequest"><a class="viewcode-back" href="../../../api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.DatabaseSecretRequest">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DatabaseSecretRequest</span><span class="p">(</span><span class="n">SecretRequest</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Represents a request for database credentials.&quot;&quot;&quot;</span>
+
+    <span class="n">slug</span> <span class="o">=</span> <span class="s2">&quot;database&quot;</span>
+
+    <span class="n">role</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="sd">&quot;&quot;&quot;Name of the database role for which to obtain credentials.&quot;&quot;&quot;</span>
+
+    <span class="n">engine</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Database dialect for which secret is required, e.g. ``mysql+mysqldb``.</span>
+
+<span class="sd">    See https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="sd">&quot;&quot;&quot;Hostname of the database server.&quot;&quot;&quot;</span>
+
+    <span class="n">port</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="sd">&quot;&quot;&quot;Port number of the database server.&quot;&quot;&quot;</span>
+
+    <span class="n">database</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="sd">&quot;&quot;&quot;Name of the database.&quot;&quot;&quot;</span>
+
+    <span class="n">params</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="sd">&quot;&quot;&quot;Param-part of the database URI connection string.&quot;&quot;&quot;</span>
+
+    <span class="n">mount_point</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;database/&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Path where the database secrets engine is mounted.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="GenericSecretRequest"><a class="viewcode-back" href="../../../api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.GenericSecretRequest">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">GenericSecretRequest</span><span class="p">(</span><span class="n">SecretRequest</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Represents a request for a generic (kv) secret.&quot;&quot;&quot;</span>
+
+    <span class="n">slug</span> <span class="o">=</span> <span class="s2">&quot;generic&quot;</span>
+
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="sd">&quot;&quot;&quot;Path to the secret.&quot;&quot;&quot;</span>
+
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="sd">&quot;&quot;&quot;Key within the secret.&quot;&quot;&quot;</span>
+
+    <span class="n">mount_point</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;secret/&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Mount point of the KV engine.&quot;&quot;&quot;</span>
+
+    <span class="n">minimum_ttl</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="sd">&quot;&quot;&quot;Renewal will be attempted no more frequently than ``minimum_ttl``.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="SecretsManager"><a class="viewcode-back" href="../../../api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.SecretsManager">[docs]</a><span class="k">class</span> <span class="nc">SecretsManager</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fulfills requests for Vault secrets, and manages renewal transparently.</span>
+
+<span class="sd">    A typical use case for working with Vault secrets is that we want to</span>
+<span class="sd">    generate some configuration variables for use at run-time. For example,</span>
+<span class="sd">    in a Flask application we want things like secret keys and sensitive</span>
+<span class="sd">    database URIs to be available in the application config when handling a</span>
+<span class="sd">    request. The goal of the secrets manager is to fulfill requests for</span>
+<span class="sd">    secrets that will be used in that kind of key-value paradigm.</span>
+
+<span class="sd">    The manager should only call Vault if the secret has not been retrieved</span>
+<span class="sd">    yet, or if the secret is expired or about to expire.</span>
+
+<span class="sd">    A request is a description of the secret that is desired and (depending on</span>
+<span class="sd">    its type) the form in which it should be returned.</span>
+
+<span class="sd">    Should be one of:</span>
+
+<span class="sd">    - :class:`.AWSSecretRequest`</span>
+<span class="sd">    - :class:`.DatabaseSecretRequest`</span>
+<span class="sd">    - :class:`.GenericSecretRequest`</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vault</span><span class="p">:</span> <span class="n">Vault</span><span class="p">,</span> <span class="n">requests</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SecretRequest</span><span class="p">],</span>
+                 <span class="n">expiry_margin</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">300</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Initialize a new manager with :class:`.Vault` connection.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vault</span> <span class="o">=</span> <span class="n">vault</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">requests</span> <span class="o">=</span> <span class="n">requests</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">secrets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Secret</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expiry_margin</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">expiry_margin</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_about_to_expire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">secret</span><span class="p">:</span> <span class="n">Secret</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Check if a secret is about to expire within `margin` seconds.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">secret</span><span class="o">.</span><span class="n">is_expired</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">expiry_margin</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_format_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">DatabaseSecretRequest</span><span class="p">,</span>
+                         <span class="n">secret</span><span class="p">:</span> <span class="n">Secret</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Format a database secret.&quot;&quot;&quot;</span>
+        <span class="n">username</span><span class="p">,</span> <span class="n">password</span> <span class="o">=</span> <span class="n">secret</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{request.engine}</span><span class="s1">://</span><span class="si">{username}</span><span class="s1">:</span><span class="si">{password}</span><span class="s1">@&#39;</span> \
+               <span class="n">f</span><span class="s1">&#39;</span><span class="si">{request.host}</span><span class="s1">:</span><span class="si">{request.port}</span><span class="s1">/</span><span class="si">{request.database}</span><span class="s1">?&#39;</span> \
+               <span class="n">f</span><span class="s1">&#39;</span><span class="si">{request.params}</span><span class="s1">&#39;</span>
+
+    <span class="k">def</span> <span class="nf">_fresh_secret</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">SecretRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Secret</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get a brand new secret.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">request</span><span class="p">)</span> <span class="ow">is</span> <span class="n">AWSSecretRequest</span><span class="p">:</span>
+            <span class="n">secret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vault</span><span class="o">.</span><span class="n">aws</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">role</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">mount_point</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">request</span><span class="p">)</span> <span class="ow">is</span> <span class="n">DatabaseSecretRequest</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">MYSQL</span><span class="p">:</span>
+                <span class="n">secret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vault</span><span class="o">.</span><span class="n">mysql</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">role</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">mount_point</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;No other database engine available&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">request</span><span class="p">)</span> <span class="ow">is</span> <span class="n">GenericSecretRequest</span><span class="p">:</span>
+            <span class="n">secret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vault</span><span class="o">.</span><span class="n">generic</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+                                        <span class="n">request</span><span class="o">.</span><span class="n">mount_point</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">secret</span>
+
+    <span class="k">def</span> <span class="nf">_can_freshen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">SecretRequest</span><span class="p">,</span> <span class="n">secret</span><span class="p">:</span> <span class="n">Secret</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Enforce minimum TTL.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;minimum_ttl&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="n">age</span> <span class="o">=</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span> <span class="o">-</span> <span class="n">secret</span><span class="o">.</span><span class="n">issued</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">age</span> <span class="o">&gt;=</span> <span class="n">request</span><span class="o">.</span><span class="n">minimum_ttl</span>
+
+    <span class="k">def</span> <span class="nf">_is_stale</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">SecretRequest</span><span class="p">,</span>
+                  <span class="n">secret</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Secret</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Determine whether or not a secret requires renewal.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">secret</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> \
+            <span class="p">(</span><span class="n">secret</span><span class="o">.</span><span class="n">is_expired</span><span class="p">()</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_can_freshen</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">secret</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_get_secret</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">SecretRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Secret</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get a secret for a :class:`.SecretRequest`.&quot;&quot;&quot;</span>
+        <span class="n">secret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">secrets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_stale</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">secret</span><span class="p">):</span>
+            <span class="n">secret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fresh_secret</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_about_to_expire</span><span class="p">(</span><span class="n">secret</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">secret</span><span class="o">.</span><span class="n">renewable</span><span class="p">:</span>
+                <span class="n">secret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vault</span><span class="o">.</span><span class="n">renew</span><span class="p">(</span><span class="n">secret</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">secret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fresh_secret</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">secrets</span><span class="p">[</span><span class="n">request</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">secret</span>
+        <span class="k">return</span> <span class="n">secret</span>
+
+<div class="viewcode-block" id="SecretsManager.yield_secrets"><a class="viewcode-back" href="../../../api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.SecretsManager.yield_secrets">[docs]</a>    <span class="k">def</span> <span class="nf">yield_secrets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tok</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">role</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;Generate config var + secret tuples.&quot;&quot;&quot;</span>
+        <span class="c1"># Make sure that we have a current authentication with vault.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">vault</span><span class="o">.</span><span class="n">authenticated</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vault</span><span class="o">.</span><span class="n">authenticate</span><span class="p">(</span><span class="n">tok</span><span class="p">,</span> <span class="n">role</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">request</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">requests</span><span class="p">:</span>
+            <span class="n">secret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_secret</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">request</span><span class="p">)</span> <span class="ow">is</span> <span class="n">AWSSecretRequest</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="s1">&#39;AWS_ACCESS_KEY_ID&#39;</span><span class="p">,</span> <span class="n">secret</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">yield</span> <span class="s1">&#39;AWS_SECRET_ACCESS_KEY&#39;</span><span class="p">,</span> <span class="n">secret</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">request</span><span class="p">)</span> <span class="ow">is</span> <span class="n">DatabaseSecretRequest</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">request</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_database</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">secret</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">request</span><span class="p">)</span> <span class="ow">is</span> <span class="n">GenericSecretRequest</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">request</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">secret</span><span class="o">.</span><span class="n">value</span></div></div>
+
+
+<div class="viewcode-block" id="ConfigManager"><a class="viewcode-back" href="../../../api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.ConfigManager">[docs]</a><span class="k">class</span> <span class="nc">ConfigManager</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Manages access to secrets in Vault based on env-style configuration.</span>
+
+<span class="sd">    Config parameters:</span>
+
+<span class="sd">    - ``KUBE_TOKEN``, used to authenticate against the Kubernetes Auth</span>
+<span class="sd">      endpoint.</span>
+<span class="sd">    - ``VAULT_HOST``</span>
+<span class="sd">    - ``VAULT_PORT``</span>
+<span class="sd">    - ``VAULT_REQUESTS``; see :class:`.SecretsManager` for how these should be</span>
+<span class="sd">      expressed.</span>
+<span class="sd">    - ``VAULT_SCHEME`` (optional; defaults to &#39;https&#39;)</span>
+
+<span class="sd">    TODO: expand support for additional auth methods.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a :class:`.Vault` connection.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config : mapping</span>
+<span class="sd">            Configuration from which to obtain Vault parameters and requests.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;VAULT_HOST&#39;</span><span class="p">]</span>
+        <span class="n">port</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;VAULT_PORT&#39;</span><span class="p">]</span>
+        <span class="n">cert</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;VAULT_CERT&#39;</span><span class="p">]</span>
+
+        <span class="n">scheme</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;VAULT_SCHEME&#39;</span><span class="p">,</span> <span class="s1">&#39;https&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vault</span> <span class="o">=</span> <span class="n">Vault</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">scheme</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="n">cert</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;New Vault connection at </span><span class="si">%s</span><span class="s1">://</span><span class="si">%s</span><span class="s1">:</span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">scheme</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">requests</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_requests</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">secrets</span> <span class="o">=</span> <span class="n">SecretsManager</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vault</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">requests</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">token</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Kubernetes token.&quot;&quot;&quot;</span>
+        <span class="n">tok</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;KUBE_TOKEN&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">tok</span><span class="p">):</span>     <span class="c1"># May be a path to the token on disk.</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">tok</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">tok</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">role</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Vault role.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;VAULT_ROLE&#39;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_get_requests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SecretRequest</span><span class="p">]:</span>
+        <span class="n">requests</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SecretRequest</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">req_data</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;VAULT_REQUESTS&#39;</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="n">req_data</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">req_data</span><span class="p">)</span>
+            <span class="n">req_type</span> <span class="o">=</span> <span class="n">req_data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span>
+            <span class="n">requests</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SecretRequest</span><span class="o">.</span><span class="n">factory</span><span class="p">(</span><span class="n">req_type</span><span class="p">,</span> <span class="o">**</span><span class="n">req_data</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">requests</span>
+
+<div class="viewcode-block" id="ConfigManager.yield_secrets"><a class="viewcode-back" href="../../../api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.ConfigManager.yield_secrets">[docs]</a>    <span class="k">def</span> <span class="nf">yield_secrets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;Yield secrets from the :class:`.SecretsManager`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">secrets</span><span class="o">.</span><span class="n">yield_secrets</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">token</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">arXiv Vault Integration</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architectural overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/arxiv.vault/modules.html">arxiv</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, arXiv-NG Team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

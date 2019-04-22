@@ -1,0 +1,277 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>arxiv.vault.core module &#8212; arXiv Vault Integration 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="arxiv.vault.manager module" href="arxiv.vault.manager.html" />
+    <link rel="prev" title="arxiv.vault.adapter module" href="arxiv.vault.adapter.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-arxiv.vault.core">
+<span id="arxiv-vault-core-module"></span><h1>arxiv.vault.core module<a class="headerlink" href="#module-arxiv.vault.core" title="Permalink to this headline">¶</a></h1>
+<p>Provides simple Vault API client.</p>
+<dl class="class">
+<dt id="arxiv.vault.core.Secret">
+<em class="property">class </em><code class="descclassname">arxiv.vault.core.</code><code class="descname">Secret</code><span class="sig-paren">(</span><em>value</em>, <em>issued</em>, <em>lease_id</em>, <em>lease_duration</em>, <em>renewable</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/core.html#Secret"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.core.Secret" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#object" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Represents a secret retrieved from Vault.</p>
+<dl class="attribute">
+<dt id="arxiv.vault.core.Secret.expires">
+<code class="descname">expires</code><a class="headerlink" href="#arxiv.vault.core.Secret.expires" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the datetime that the lease will expire.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/datetime.html#datetime.datetime" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="arxiv.vault.core.Secret.is_expired">
+<code class="descname">is_expired</code><span class="sig-paren">(</span><em>as_of=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/core.html#Secret.is_expired"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.core.Secret.is_expired" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether the token is expired (as of <code class="docutils literal notranslate"><span class="pre">as_of</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="arxiv.vault.core.Token">
+<em class="property">class </em><code class="descclassname">arxiv.vault.core.</code><code class="descname">Token</code><span class="sig-paren">(</span><em>value</em>, <em>issued</em>, <em>lease_id</em>, <em>lease_duration</em>, <em>renewable</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/core.html#Token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.core.Token" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#arxiv.vault.core.Secret" title="arxiv.vault.core.Secret"><code class="xref py py-class docutils literal notranslate"><span class="pre">arxiv.vault.core.Secret</span></code></a></p>
+<p>An auth token secret.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="arxiv.vault.core.Vault">
+<em class="property">class </em><code class="descclassname">arxiv.vault.core.</code><code class="descname">Vault</code><span class="sig-paren">(</span><em>host</em>, <em>port</em>, <em>scheme='https'</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/core.html#Vault"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.core.Vault" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#object" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>A simple Vault API client.</p>
+<dl class="method">
+<dt id="arxiv.vault.core.Vault.authenticate">
+<code class="descname">authenticate</code><span class="sig-paren">(</span><em>kube_token</em>, <em>role</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/core.html#Vault.authenticate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.core.Vault.authenticate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Authenticate using a Kubernetes token, and obtain a Vault token.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kube_token</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Kubernetes service account token. Used to authenticate against the
+Vault cluster using the <a class="reference external" href="https://www.vaultproject.io/docs/auth/kubernetes.html">Kubernetes Auth Method</a>.</p></li>
+<li><p><strong>role</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Name of the Vault role against which to authenticate.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.core.Vault.authenticated">
+<code class="descname">authenticated</code><a class="headerlink" href="#arxiv.vault.core.Vault.authenticated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate whether or not we are authenticated with Vault.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="arxiv.vault.core.Vault.aws">
+<code class="descname">aws</code><span class="sig-paren">(</span><em>role</em>, <em>mount_point</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/core.html#Vault.aws"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.core.Vault.aws" title="Permalink to this definition">¶</a></dt>
+<dd><p>Obtain an AWS credential.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>role</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Name of the pre-configured AWS policy role registered with Vault.</p></li>
+<li><p><strong>mount_point</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Path where the AWS secrets engine is mounted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#arxiv.vault.core.Secret" title="arxiv.vault.core.Secret"><code class="xref py py-class docutils literal notranslate"><span class="pre">Secret</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.core.Vault.client">
+<code class="descname">client</code><a class="headerlink" href="#arxiv.vault.core.Vault.client" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the current HVAC Vault client.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://hvac.readthedocs.io/en/stable/source/hvac_v1.html#hvac.v1.Client" title="(in hvac v0.8.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="arxiv.vault.core.Vault.generic">
+<code class="descname">generic</code><span class="sig-paren">(</span><em>path</em>, <em>key</em>, <em>mount_point='secret/'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/core.html#Vault.generic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.core.Vault.generic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a generic secret value by key.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Path to the secret.</p></li>
+<li><p><strong>key</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Key within the secret to retrieve.</p></li>
+<li><p><strong>mount_point</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Path where the KV secrets engine is mounted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#arxiv.vault.core.Secret" title="arxiv.vault.core.Secret"><code class="xref py py-class docutils literal notranslate"><span class="pre">Secret</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.core.Vault.kubernetes_mountpoint">
+<code class="descname">kubernetes_mountpoint</code><em class="property"> = 'kubernetes'</em><a class="headerlink" href="#arxiv.vault.core.Vault.kubernetes_mountpoint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="arxiv.vault.core.Vault.mysql">
+<code class="descname">mysql</code><span class="sig-paren">(</span><em>role</em>, <em>mount_point</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/core.html#Vault.mysql"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.core.Vault.mysql" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a MySQL secret.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>role</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Name of the pre-configured database role registered with Vault.</p></li>
+<li><p><strong>mount_point</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Path where the database secrets engine is mounted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#arxiv.vault.core.Secret" title="arxiv.vault.core.Secret"><code class="xref py py-class docutils literal notranslate"><span class="pre">Secret</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="arxiv.vault.core.Vault.renew">
+<code class="descname">renew</code><span class="sig-paren">(</span><em>secret</em>, <em>increment=3600</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/core.html#Vault.renew"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.core.Vault.renew" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renew a <a class="reference internal" href="#arxiv.vault.core.Secret" title="arxiv.vault.core.Secret"><code class="xref py py-class docutils literal notranslate"><span class="pre">Secret</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#arxiv.vault.core.Secret" title="arxiv.vault.core.Secret"><code class="xref py py-class docutils literal notranslate"><span class="pre">Secret</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">arXiv Vault Integration</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">arxiv</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="arxiv.vault.html">arxiv.vault package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">arxiv</a><ul>
+  <li><a href="arxiv.vault.html">arxiv.vault package</a><ul>
+      <li>Previous: <a href="arxiv.vault.adapter.html" title="previous chapter">arxiv.vault.adapter module</a></li>
+      <li>Next: <a href="arxiv.vault.manager.html" title="next chapter">arxiv.vault.manager module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, arXiv-NG Team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/api/arxiv.vault/arxiv.vault.core.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

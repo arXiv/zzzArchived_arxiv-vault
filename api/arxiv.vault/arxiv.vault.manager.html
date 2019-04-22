@@ -1,0 +1,335 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>arxiv.vault.manager module &#8212; arXiv Vault Integration 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="arxiv.vault.middleware module" href="arxiv.vault.middleware.html" />
+    <link rel="prev" title="arxiv.vault.core module" href="arxiv.vault.core.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-arxiv.vault.manager">
+<span id="arxiv-vault-manager-module"></span><h1>arxiv.vault.manager module<a class="headerlink" href="#module-arxiv.vault.manager" title="Permalink to this headline">¶</a></h1>
+<p>Provides <a class="reference internal" href="#arxiv.vault.manager.SecretsManager" title="arxiv.vault.manager.SecretsManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">SecretsManager</span></code></a>.</p>
+<dl class="class">
+<dt id="arxiv.vault.manager.AWSSecretRequest">
+<em class="property">class </em><code class="descclassname">arxiv.vault.manager.</code><code class="descname">AWSSecretRequest</code><span class="sig-paren">(</span><em>name</em>, <em>role</em>, <em>mount_point='aws/'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/manager.html#AWSSecretRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.manager.AWSSecretRequest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#arxiv.vault.manager.SecretRequest" title="arxiv.vault.manager.SecretRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">arxiv.vault.manager.SecretRequest</span></code></a></p>
+<p>Represents a request for AWS credentials.</p>
+<dl class="attribute">
+<dt id="arxiv.vault.manager.AWSSecretRequest.mount_point">
+<code class="descname">mount_point</code><em class="property"> = 'aws/'</em><a class="headerlink" href="#arxiv.vault.manager.AWSSecretRequest.mount_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path where the AWS secrets engine is mounted.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.manager.AWSSecretRequest.role">
+<code class="descname">role</code><em class="property"> = None</em><a class="headerlink" href="#arxiv.vault.manager.AWSSecretRequest.role" title="Permalink to this definition">¶</a></dt>
+<dd><p>An AWS role that has been pre-configured with IAM policies in Vault.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.manager.AWSSecretRequest.slug">
+<code class="descname">slug</code><em class="property"> = 'aws'</em><a class="headerlink" href="#arxiv.vault.manager.AWSSecretRequest.slug" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="arxiv.vault.manager.ConfigManager">
+<em class="property">class </em><code class="descclassname">arxiv.vault.manager.</code><code class="descname">ConfigManager</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/manager.html#ConfigManager"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.manager.ConfigManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#object" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Manages access to secrets in Vault based on env-style configuration.</p>
+<p>Config parameters:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">KUBE_TOKEN</span></code>, used to authenticate against the Kubernetes Auth
+endpoint.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VAULT_HOST</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VAULT_PORT</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VAULT_REQUESTS</span></code>; see <a class="reference internal" href="#arxiv.vault.manager.SecretsManager" title="arxiv.vault.manager.SecretsManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">SecretsManager</span></code></a> for how these should be
+expressed.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VAULT_SCHEME</span></code> (optional; defaults to ‘https’)</p></li>
+</ul>
+<p>TODO: expand support for additional auth methods.</p>
+<dl class="attribute">
+<dt id="arxiv.vault.manager.ConfigManager.role">
+<code class="descname">role</code><a class="headerlink" href="#arxiv.vault.manager.ConfigManager.role" title="Permalink to this definition">¶</a></dt>
+<dd><p>Vault role.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.manager.ConfigManager.token">
+<code class="descname">token</code><a class="headerlink" href="#arxiv.vault.manager.ConfigManager.token" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kubernetes token.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="arxiv.vault.manager.ConfigManager.yield_secrets">
+<code class="descname">yield_secrets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/manager.html#ConfigManager.yield_secrets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.manager.ConfigManager.yield_secrets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield secrets from the <a class="reference internal" href="#arxiv.vault.manager.SecretsManager" title="arxiv.vault.manager.SecretsManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">SecretsManager</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="arxiv.vault.manager.DatabaseSecretRequest">
+<em class="property">class </em><code class="descclassname">arxiv.vault.manager.</code><code class="descname">DatabaseSecretRequest</code><span class="sig-paren">(</span><em>name</em>, <em>role</em>, <em>engine</em>, <em>host</em>, <em>port</em>, <em>database</em>, <em>params</em>, <em>mount_point='database/'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/manager.html#DatabaseSecretRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.manager.DatabaseSecretRequest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#arxiv.vault.manager.SecretRequest" title="arxiv.vault.manager.SecretRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">arxiv.vault.manager.SecretRequest</span></code></a></p>
+<p>Represents a request for database credentials.</p>
+<dl class="attribute">
+<dt id="arxiv.vault.manager.DatabaseSecretRequest.database">
+<code class="descname">database</code><em class="property"> = None</em><a class="headerlink" href="#arxiv.vault.manager.DatabaseSecretRequest.database" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the database.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.manager.DatabaseSecretRequest.engine">
+<code class="descname">engine</code><em class="property"> = None</em><a class="headerlink" href="#arxiv.vault.manager.DatabaseSecretRequest.engine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Database dialect for which secret is required, e.g. <code class="docutils literal notranslate"><span class="pre">mysql+mysqldb</span></code>.</p>
+<p>See <a class="reference external" href="https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls">https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls</a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.manager.DatabaseSecretRequest.host">
+<code class="descname">host</code><em class="property"> = None</em><a class="headerlink" href="#arxiv.vault.manager.DatabaseSecretRequest.host" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hostname of the database server.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.manager.DatabaseSecretRequest.mount_point">
+<code class="descname">mount_point</code><em class="property"> = 'database/'</em><a class="headerlink" href="#arxiv.vault.manager.DatabaseSecretRequest.mount_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path where the database secrets engine is mounted.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.manager.DatabaseSecretRequest.params">
+<code class="descname">params</code><em class="property"> = None</em><a class="headerlink" href="#arxiv.vault.manager.DatabaseSecretRequest.params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Param-part of the database URI connection string.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.manager.DatabaseSecretRequest.port">
+<code class="descname">port</code><em class="property"> = None</em><a class="headerlink" href="#arxiv.vault.manager.DatabaseSecretRequest.port" title="Permalink to this definition">¶</a></dt>
+<dd><p>Port number of the database server.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.manager.DatabaseSecretRequest.role">
+<code class="descname">role</code><em class="property"> = None</em><a class="headerlink" href="#arxiv.vault.manager.DatabaseSecretRequest.role" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the database role for which to obtain credentials.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.manager.DatabaseSecretRequest.slug">
+<code class="descname">slug</code><em class="property"> = 'database'</em><a class="headerlink" href="#arxiv.vault.manager.DatabaseSecretRequest.slug" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="arxiv.vault.manager.GenericSecretRequest">
+<em class="property">class </em><code class="descclassname">arxiv.vault.manager.</code><code class="descname">GenericSecretRequest</code><span class="sig-paren">(</span><em>name</em>, <em>path</em>, <em>key</em>, <em>mount_point='secret/'</em>, <em>minimum_ttl=0</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/manager.html#GenericSecretRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.manager.GenericSecretRequest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#arxiv.vault.manager.SecretRequest" title="arxiv.vault.manager.SecretRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">arxiv.vault.manager.SecretRequest</span></code></a></p>
+<p>Represents a request for a generic (kv) secret.</p>
+<dl class="attribute">
+<dt id="arxiv.vault.manager.GenericSecretRequest.key">
+<code class="descname">key</code><em class="property"> = None</em><a class="headerlink" href="#arxiv.vault.manager.GenericSecretRequest.key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Key within the secret.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.manager.GenericSecretRequest.minimum_ttl">
+<code class="descname">minimum_ttl</code><em class="property"> = 0</em><a class="headerlink" href="#arxiv.vault.manager.GenericSecretRequest.minimum_ttl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renewal will be attempted no more frequently than <code class="docutils literal notranslate"><span class="pre">minimum_ttl</span></code>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.manager.GenericSecretRequest.mount_point">
+<code class="descname">mount_point</code><em class="property"> = 'secret/'</em><a class="headerlink" href="#arxiv.vault.manager.GenericSecretRequest.mount_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mount point of the KV engine.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.manager.GenericSecretRequest.path">
+<code class="descname">path</code><em class="property"> = None</em><a class="headerlink" href="#arxiv.vault.manager.GenericSecretRequest.path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to the secret.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="arxiv.vault.manager.GenericSecretRequest.slug">
+<code class="descname">slug</code><em class="property"> = 'generic'</em><a class="headerlink" href="#arxiv.vault.manager.GenericSecretRequest.slug" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="arxiv.vault.manager.SecretRequest">
+<em class="property">class </em><code class="descclassname">arxiv.vault.manager.</code><code class="descname">SecretRequest</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/manager.html#SecretRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.manager.SecretRequest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#object" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Represents a request for a secret from Vault.</p>
+<dl class="classmethod">
+<dt id="arxiv.vault.manager.SecretRequest.factory">
+<em class="property">classmethod </em><code class="descname">factory</code><span class="sig-paren">(</span><em>request_type</em>, <em>**data</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/manager.html#SecretRequest.factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.manager.SecretRequest.factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Genereate a request of the appropriate type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#arxiv.vault.manager.SecretRequest" title="arxiv.vault.manager.SecretRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">SecretRequest</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="arxiv.vault.manager.SecretsManager">
+<em class="property">class </em><code class="descclassname">arxiv.vault.manager.</code><code class="descname">SecretsManager</code><span class="sig-paren">(</span><em>vault</em>, <em>requests</em>, <em>expiry_margin=300</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/manager.html#SecretsManager"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.manager.SecretsManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#object" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Fulfills requests for Vault secrets, and manages renewal transparently.</p>
+<p>A typical use case for working with Vault secrets is that we want to
+generate some configuration variables for use at run-time. For example,
+in a Flask application we want things like secret keys and sensitive
+database URIs to be available in the application config when handling a
+request. The goal of the secrets manager is to fulfill requests for
+secrets that will be used in that kind of key-value paradigm.</p>
+<p>The manager should only call Vault if the secret has not been retrieved
+yet, or if the secret is expired or about to expire.</p>
+<p>A request is a description of the secret that is desired and (depending on
+its type) the form in which it should be returned.</p>
+<p>Should be one of:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#arxiv.vault.manager.AWSSecretRequest" title="arxiv.vault.manager.AWSSecretRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">AWSSecretRequest</span></code></a></p></li>
+<li><p><a class="reference internal" href="#arxiv.vault.manager.DatabaseSecretRequest" title="arxiv.vault.manager.DatabaseSecretRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">DatabaseSecretRequest</span></code></a></p></li>
+<li><p><a class="reference internal" href="#arxiv.vault.manager.GenericSecretRequest" title="arxiv.vault.manager.GenericSecretRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericSecretRequest</span></code></a></p></li>
+</ul>
+<dl class="method">
+<dt id="arxiv.vault.manager.SecretsManager.yield_secrets">
+<code class="descname">yield_secrets</code><span class="sig-paren">(</span><em>tok</em>, <em>role</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/manager.html#SecretsManager.yield_secrets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.manager.SecretsManager.yield_secrets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate config var + secret tuples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">arXiv Vault Integration</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">arxiv</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="arxiv.vault.html">arxiv.vault package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">arxiv</a><ul>
+  <li><a href="arxiv.vault.html">arxiv.vault package</a><ul>
+      <li>Previous: <a href="arxiv.vault.core.html" title="previous chapter">arxiv.vault.core module</a></li>
+      <li>Next: <a href="arxiv.vault.middleware.html" title="next chapter">arxiv.vault.middleware module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, arXiv-NG Team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/api/arxiv.vault/arxiv.vault.manager.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

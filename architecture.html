@@ -1,0 +1,220 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Architectural overview &#8212; arXiv Vault Integration 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="arxiv" href="api/arxiv.vault/modules.html" />
+    <link rel="prev" title="arXiv Vault Integration" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="architectural-overview">
+<h1>Architectural overview<a class="headerlink" href="#architectural-overview" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="background">
+<h2>Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://www.vaultproject.io/">HashiCorp Vault</a> provides a secure
+clearinghouse for sensitive information required by our applications, including
+engines for creating, managing, and revoking short-lived credentials for AWS
+resources, databases, and other protected systems. Using Vault increases our
+overall security profile by eliminating the need to embed secrets in
+application configurations, and makes it much easier to implement short
+lifetimes and rotation without a ton of manual human intervention.</p>
+<p>Applications need to be able to obtain sensitive information from Vault
+via its API. Handling this outside of the application is a bit janky; either a
+sidecar process is required, or the app must be periodically killed and
+restarted with fresh secrets (e.g. database credentials).</p>
+<p>The goal of this project is to reduce the complexity of using Vault secrets by
+implementing a lightweight Python integration that runs inside the client app.</p>
+<p>We should be able to use the following information…</p>
+<ul class="simple">
+<li><p>Auth token</p></li>
+<li><p>Vault endpoint and port number</p></li>
+<li><p>The name of the Vault role that the application requires</p></li>
+</ul>
+<p>…to retrieve the followings kinds of secrets:</p>
+<ul class="simple">
+<li><p>AWS credentials bound to a specific policy in Vault</p></li>
+<li><p>Database credentials provisioned by Vault</p></li>
+<li><p>Generic secrets (key/value)</p></li>
+</ul>
+</div>
+<div class="section" id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Configured and deployed as part of the application itself; no additional
+containers to run, daemonization, etc.</p></li>
+<li><p>Can be used in any Python application that we currently or plan to operate,
+including with Flask, Celery, and Kinesis consumers.</p></li>
+<li><p>Retrieves secrets and holds on to them for use during runtime so that we
+don’t need to retrieve them every time we need them.</p></li>
+<li><p>Monitors the lease duration/expiration of each secret, and automatically
+refreshes the credential(s) as needed.</p></li>
+<li><p>Supports validation of self-signed Vault certificate.</p></li>
+</ul>
+<p>Supports the following engines/types:</p>
+<ul class="simple">
+<li><p>Key/value v2</p></li>
+<li><p>AWS</p></li>
+<li><p>Database</p></li>
+</ul>
+<p>Other nice things that we want:</p>
+<ul class="simple">
+<li><p>Provides a WSGI middleware for use in WSGI apps</p></li>
+<li><p>Can generate database URIs from secrets that are ready to use</p></li>
+</ul>
+<p>Future:</p>
+<ul class="simple">
+<li><p>Consider PKI secrets, e.g. if we need to use client certs, or need to
+validate self-signed certs.</p></li>
+</ul>
+</div>
+<div class="section" id="solution-strategy">
+<h2>Solution strategy<a class="headerlink" href="#solution-strategy" title="Permalink to this headline">¶</a></h2>
+<p>Vault is configured with the <a class="reference external" href="https://www.vaultproject.io/docs/auth/kubernetes.html">Kubernetes auth method</a>. Applications running
+in Kubernetes can authenticate with Vault using a Kubernetes ServiceAccount
+token. Each deployment in Kubernetes must therefore have a ServiceAccount in
+the namespace in which it is deployed, and Vault must be configured with a
+role that maps to that ServiceAccount. The application can load the token from
+disk within its pod. Vault then uses the Kubernetes API to validate the token,
+and returns and authentication token to the application for use in subsequent
+requests.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="_images/arxiv-vault-context.png"><img alt="_images/arxiv-vault-context.png" src="_images/arxiv-vault-context.png" style="width: 600px;" /></a>
+</div>
+<p>The application may use the Vault authentication token to retrieve secrets
+within the constraints of its role/bound policies.</p>
+<p>Each application must therefore be configured with:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">KUBE_TOKEN</span></code>, the path to the ServiceAccount token on disk;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VAULT_ROLE</span></code>, the role in Vault that is bound to the ServiceAccount in the
+application’s namespace.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VAULT_HOST</span></code>, the hostname of the Vault API;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VAULT_PORT</span></code>, the port of the Vault API;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VAULT_SCHEME</span></code>, defaults to <code class="docutils literal notranslate"><span class="pre">https</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VAULT_REQUESTS</span></code>, which details the secrets that should be retrieved
+from Vault. See <a class="reference internal" href="api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.SecretsManager" title="arxiv.vault.manager.SecretsManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">arxiv.vault.manager.SecretsManager</span></code></a> for details.</p></li>
+</ul>
+</div>
+<div class="section" id="components">
+<h2>Components<a class="headerlink" href="#components" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference internal" href="api/arxiv.vault/arxiv.vault.core.html#arxiv.vault.core.Vault" title="arxiv.vault.core.Vault"><code class="xref py py-class docutils literal notranslate"><span class="pre">arxiv.vault.core.Vault</span></code></a> is the domain-specific client implementation
+for interactive with Vault. It uses <a class="reference external" href="https://hvac.readthedocs.io/en/stable/overview.html#">hvac</a>, along with an
+extension for the MySQL secrets engine
+(<a class="reference internal" href="api/arxiv.vault/arxiv.vault.hvac_extensions.api.secrets_engines.mysql.html#module-arxiv.vault.hvac_extensions.api.secrets_engines.mysql" title="arxiv.vault.hvac_extensions.api.secrets_engines.mysql"><code class="xref py py-class docutils literal notranslate"><span class="pre">arxiv.vault.hvac_extensions.api.secrets_engines.mysql</span></code></a>).</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="_images/arxiv-vault-components.png"><img alt="_images/arxiv-vault-components.png" src="_images/arxiv-vault-components.png" style="width: 300px;" /></a>
+</div>
+<p><a class="reference internal" href="api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.SecretsManager" title="arxiv.vault.manager.SecretsManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">arxiv.vault.manager.SecretsManager</span></code></a> is responsible for fulfilling
+<a class="reference internal" href="api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.SecretRequest" title="arxiv.vault.manager.SecretRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">SecretRequest</span></code></a>s using a <a class="reference internal" href="api/arxiv.vault/arxiv.vault.core.html#arxiv.vault.core.Vault" title="arxiv.vault.core.Vault"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vault</span></code></a> instance.</p>
+<p><a class="reference internal" href="api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.ConfigManager" title="arxiv.vault.manager.ConfigManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">arxiv.vault.manager.ConfigManager</span></code></a> will load <a class="reference internal" href="api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.SecretRequest" title="arxiv.vault.manager.SecretRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">SecretRequest</span></code></a>s
+from an application config (e.g. a Flask config), and orchestrate a
+<a class="reference internal" href="api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.SecretsManager" title="arxiv.vault.manager.SecretsManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">SecretsManager</span></code></a> and <a class="reference internal" href="api/arxiv.vault/arxiv.vault.core.html#arxiv.vault.core.Vault" title="arxiv.vault.core.Vault"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vault</span></code></a> to keep the config up to date.</p>
+<p>For WSGI apps, <a class="reference internal" href="api/arxiv.vault/arxiv.vault.middleware.html#arxiv.vault.middleware.VaultMiddleware" title="arxiv.vault.middleware.VaultMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">arxiv.vault.middleware.VaultMiddleware</span></code></a> will use
+<a class="reference internal" href="api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.ConfigManager" title="arxiv.vault.manager.ConfigManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigManager</span></code></a> to obtain and manage secrets, and update them before
+handling a request if they are expired. It is designed with the pattern
+in <a class="reference external" href="https://arxiv.github.io/arxiv-base/arxiv/arxiv.base.middleware.html#module-arxiv.base.middleware" title="(in arXiv base v0.2)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">arxiv.base.middleware</span></code></a> in mind, but does not need to be used that way.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">arXiv Vault Integration</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Architectural overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#background">Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#solution-strategy">Solution strategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#components">Components</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/arxiv.vault/modules.html">arxiv</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">arXiv Vault Integration</a></li>
+      <li>Next: <a href="api/arxiv.vault/modules.html" title="next chapter">arxiv</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, arXiv-NG Team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/architecture.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

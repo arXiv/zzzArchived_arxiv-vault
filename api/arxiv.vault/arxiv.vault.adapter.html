@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>arxiv.vault.adapter module &#8212; arXiv Vault Integration 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="arxiv.vault.core module" href="arxiv.vault.core.html" />
+    <link rel="prev" title="arxiv.vault.tests.test_middleware module" href="arxiv.vault.tests.test_middleware.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-arxiv.vault.adapter">
+<span id="arxiv-vault-adapter-module"></span><h1>arxiv.vault.adapter module<a class="headerlink" href="#module-arxiv.vault.adapter" title="Permalink to this headline">¶</a></h1>
+<p>HTTP adapter for use with <a class="reference external" href="https://hvac.readthedocs.io/en/stable/source/hvac_v1.html#hvac.v1.Client" title="(in hvac v0.8.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">hvac.v1.Client</span></code></a>.</p>
+<dl class="class">
+<dt id="arxiv.vault.adapter.HostnameLiberalAdapter">
+<em class="property">class </em><code class="descclassname">arxiv.vault.adapter.</code><code class="descname">HostnameLiberalAdapter</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/adapter.html#HostnameLiberalAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.adapter.HostnameLiberalAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://hvac.readthedocs.io/en/stable/source/hvac_adapters.html#hvac.adapters.Request" title="(in hvac v0.8.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">hvac.adapters.Request</span></code></a></p>
+<p>Extends <a class="reference external" href="https://hvac.readthedocs.io/en/stable/source/hvac_adapters.html#hvac.adapters.Request" title="(in hvac v0.8.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">hvac.adapters.Request</span></code></a> to ignore hostnames.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="arxiv.vault.adapter.HostnameLiberalHTTPAdapter">
+<em class="property">class </em><code class="descclassname">arxiv.vault.adapter.</code><code class="descname">HostnameLiberalHTTPAdapter</code><span class="sig-paren">(</span><em>pool_connections=10</em>, <em>pool_maxsize=10</em>, <em>max_retries=0</em>, <em>pool_block=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/adapter.html#HostnameLiberalHTTPAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.adapter.HostnameLiberalHTTPAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">requests.adapters.HTTPAdapter</span></code></p>
+<p>Extends <code class="xref py py-class docutils literal notranslate"><span class="pre">HTTPAdapter</span></code> to ignore hostnames.</p>
+<dl class="method">
+<dt id="arxiv.vault.adapter.HostnameLiberalHTTPAdapter.init_poolmanager">
+<code class="descname">init_poolmanager</code><span class="sig-paren">(</span><em>connections</em>, <em>maxsize</em>, <em>block=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/adapter.html#HostnameLiberalHTTPAdapter.init_poolmanager"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.adapter.HostnameLiberalHTTPAdapter.init_poolmanager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize <code class="xref py py-class docutils literal notranslate"><span class="pre">PoolManager</span></code> without hostname assertion.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">arXiv Vault Integration</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">arxiv</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="arxiv.vault.html">arxiv.vault package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">arxiv</a><ul>
+  <li><a href="arxiv.vault.html">arxiv.vault package</a><ul>
+      <li>Previous: <a href="arxiv.vault.tests.test_middleware.html" title="previous chapter">arxiv.vault.tests.test_middleware module</a></li>
+      <li>Next: <a href="arxiv.vault.core.html" title="next chapter">arxiv.vault.core module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, arXiv-NG Team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/api/arxiv.vault/arxiv.vault.adapter.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
