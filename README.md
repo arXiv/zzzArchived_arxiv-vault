@@ -45,6 +45,34 @@ from arxiv.base.middleware import wrap
 
 def create_app() -> Flask:
     app = Flask(__name__, ...)
+    # Normally this would be in config.py, but for the sake of brevity...
+    app.config.update({
+        'KUBE_TOKEN': '/path/to/ServiceAccount/token',
+        'VAULT_HOST': 'foohost',
+        'VAULT_PORT': '8200',
+        'VAULT_ROLE': 'my-app-role',
+        'VAULT_CERT': '/path/to/cert',
+        'VAULT_REQUESTS': [
+            {
+                'type': 'generic',
+                'name': 'JWT_SECRET',
+                'mount_point': 'wherethesecretslive/',
+                'path': 'jwt',
+                'key': 'secret'
+            },
+            {
+                'type': 'database',
+                'name': 'FOO_DATABASE_URI',
+                'engine': 'mysql+mysqldb',
+                'mount_point': 'foo-database-dev/',
+                'role': 'foo-db-role',
+                'host': 'fooserver',
+                'port': '3306',
+                'database': 'foodb',
+                'params': 'charset=utf8mb4'
+            }
+        ]
+    })
     ...
 
     wrap(app, [VaultMiddleware])
@@ -63,36 +91,65 @@ from arxiv.vault.manager import ConfigManager
 from .factory import create_app
 from .celery import celery_app
 
-
 __secrets__ = None
+__app__ = create_app()
+
+# Normally this would be in config.py, but for the sake of brevity...
+__app__.config.update({
+    'KUBE_TOKEN': '/path/to/ServiceAccount/token',
+    'VAULT_HOST': 'foohost',
+    'VAULT_PORT': '8200',
+    'VAULT_ROLE': 'my-app-role',
+    'VAULT_CERT': '/path/to/cert',
+    'VAULT_REQUESTS': [
+        {
+            'type': 'generic',
+            'name': 'JWT_SECRET',
+            'mount_point': 'wherethesecretslive/',
+            'path': 'jwt',
+            'key': 'secret'
+        },
+        ...
+    ]
+})
 
 
 @celeryd_init.connect   # Runs in the worker right when the daemon starts.
 def get_secrets(*args: Any, **kwargs: Any) -> None:
     """Collect any required secrets from Vault."""
-    if not app.config['VAULT_ENABLED']:
+    if not __app__.config['VAULT_ENABLED']:
         print('Vault not enabled; skipping')
         return
 
     for key, value in get_secrets_manager().yield_secrets():
-        app.config[key] = value
+        __app__.config[key] = value
 
 
 @task_prerun.connect    # Runs in the worker before start a task.
 def verify_secrets_up_to_date(*args: Any, **kwargs: Any) -> None:
     """Verify that any required secrets from Vault are up to date."""
-    if not app.config['VAULT_ENABLED']:
+    if not __app__.config['VAULT_ENABLED']:
         print('Vault not enabled; skipping')
         return
 
     for key, value in get_secrets_manager().yield_secrets():
-        app.config[key] = value
+        __app__.config[key] = value
 
 
 def get_secrets_manager() -> ConfigManager:
     global __secrets__
     if __secrets__ is None:
-        __secrets__ = ConfigManager(app.config)
+        __secrets__ = ConfigManager(__app__.config)
     return __secrets__
 
+```
+
+## Documentation
+
+### Building
+
+```bash
+sphinx-apidoc -o docs/source/api/arxiv.vault -e -f -M --implicit-namespaces arxiv *test*/*
+cd docs/
+make html SPHINXBUILD=$(pipenv --venv)/bin/sphinx-build
 ```

@@ -13,12 +13,14 @@ pydocstyle = "*"
 mypy = "*"
 arxiv-base = "==0.15.4rc1"
 wheel = "*"
+sphinx = "*"
 
 [packages]
 hvac = "*"
 arxiv-vault = {path = "."}
 dataclasses = "*"
 urllib3 = ">=1.24.2"
+sphinx-autodoc-typehints = "*"
 
 [requires]
 python_version = "3.6"
