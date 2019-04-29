@@ -5,11 +5,22 @@ from datetime import datetime, timedelta
 from pytz import UTC
 from functools import partial
 import os
+import warnings
 
 import logging
 
 from .core import Vault, Secret
 from .manager import SecretsManager, SecretRequest, ConfigManager
+
+
+# Monkey-patching `warnings.formatwarning`.
+def formatwarning(message, category, filepath, lineno, line=None):
+    """Make the warnings a bit prettier."""
+    _, filename = os.path.split(filepath)
+    return f'arxiv.vault.middleware: {message}\n'
+
+
+warnings.formatwarning = formatwarning
 
 WSGIRequest = Tuple[dict, Callable]
 
@@ -74,6 +85,8 @@ class VaultMiddleware:
         logger.debug('Yield secrets from %s', self.secrets)
         for key, value in self.secrets.yield_secrets():
             logger.debug('Got secret %s', key)
+            if environ.get(key) != value:
+                warnings.warn(f'Updating {key} with a new value')
             environ[key] = value
             self.config[key] = value
         response: Iterable = self.app(environ, start_response)
