@@ -246,8 +246,16 @@ its type) the form in which it should be returned.</p>
 <code class="descname">yield_secrets</code><span class="sig-paren">(</span><em>tok</em>, <em>role</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/manager.html#SecretsManager.yield_secrets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.manager.SecretsManager.yield_secrets" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate config var + secret tuples.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>token</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Token for authenticating with Vault. For example, the Kubernetes
+ServiceAccount token used to authenticate with the Kubernetes
+auth method.</p></li>
+<li><p><strong>role</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – The name of the Vault role associated with the token.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -275,6 +283,7 @@ its type) the form in which it should be returned.</p>
 <h3>Navigation</h3>
 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../architecture.html">Architectural overview</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">arxiv</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="arxiv.vault.html">arxiv.vault package</a></li>
 </ul>

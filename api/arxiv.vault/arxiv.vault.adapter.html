@@ -41,6 +41,11 @@
 <em class="property">class </em><code class="descclassname">arxiv.vault.adapter.</code><code class="descname">HostnameLiberalAdapter</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/arxiv/vault/adapter.html#HostnameLiberalAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#arxiv.vault.adapter.HostnameLiberalAdapter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://hvac.readthedocs.io/en/stable/source/hvac_adapters.html#hvac.adapters.Request" title="(in hvac v0.8.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">hvac.adapters.Request</span></code></a></p>
 <p>Extends <a class="reference external" href="https://hvac.readthedocs.io/en/stable/source/hvac_adapters.html#hvac.adapters.Request" title="(in hvac v0.8.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">hvac.adapters.Request</span></code></a> to ignore hostnames.</p>
+<p>If we are accessing Vault via one of its nodes’ IP addresses, hostname
+verification during the TLS handshake will fail. We still want to verify
+the certificate, we just don’t want to have to verify the hostname. For
+background on the painful complexity of TLS with Vault, see
+<a href="#id1"><span class="problematic" id="id2">`https://github.com/hashicorp/vault/issues/764`_</span></a>.</p>
 </dd></dl>
 
 <dl class="class">
@@ -77,6 +82,7 @@
 <h3>Navigation</h3>
 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../architecture.html">Architectural overview</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">arxiv</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="arxiv.vault.html">arxiv.vault package</a></li>
 </ul>

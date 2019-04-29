@@ -216,7 +216,19 @@
         <span class="k">return</span> <span class="n">secret</span>
 
 <div class="viewcode-block" id="SecretsManager.yield_secrets"><a class="viewcode-back" href="../../../api/arxiv.vault/arxiv.vault.manager.html#arxiv.vault.manager.SecretsManager.yield_secrets">[docs]</a>    <span class="k">def</span> <span class="nf">yield_secrets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tok</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">role</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-        <span class="sd">&quot;&quot;&quot;Generate config var + secret tuples.&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate config var + secret tuples.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        token : str</span>
+<span class="sd">            Token for authenticating with Vault. For example, the Kubernetes</span>
+<span class="sd">            ServiceAccount token used to authenticate with the Kubernetes</span>
+<span class="sd">            auth method.</span>
+<span class="sd">        role : str</span>
+<span class="sd">            The name of the Vault role associated with the token.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Make sure that we have a current authentication with vault.</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">vault</span><span class="o">.</span><span class="n">authenticated</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">vault</span><span class="o">.</span><span class="n">authenticate</span><span class="p">(</span><span class="n">tok</span><span class="p">,</span> <span class="n">role</span><span class="p">)</span>
