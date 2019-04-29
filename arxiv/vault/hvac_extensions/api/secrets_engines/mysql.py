@@ -18,12 +18,14 @@ class MySql(VaultApiBase):
                              mount_point: str = DEFAULT_MOUNT) -> Mapping:
         """Generate new database credentials."""
         resp: Mapping
-        resp = self._adapter.get(url=f'/v1/{mount_point}/{endpoint}/{name}')
-        return resp.json()
+        # Do this ahead of time so that HVAC doesn't complain.
+        url = f'/v1/{mount_point}/{endpoint}/{name}'.replace('//', '/')
+        return self._adapter.get(url=url).json()
 
     def read_role(self, name: str, endpoint: str = 'roles',
                   mount_point: str = DEFAULT_MOUNT) -> Mapping:
         """Query the role definition."""
         resp: Mapping
-        resp = self._adapter.get(url=f'/v1/{mount_point}/{endpoint}/{name}')
-        return resp.json()
+        # Do this ahead of time so that HVAC doesn't complain.
+        url = f'/v1/{mount_point}/{endpoint}/{name}'.replace('//', '/')
+        return self._adapter.get(url=url).json()
