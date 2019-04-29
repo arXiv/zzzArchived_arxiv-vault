@@ -34,6 +34,34 @@ Requires Python >= 3.6. To install with pipenv:
 pipenv install arxiv-vault
 ```
 
+## Notes on terminology
+
+The [Vault documentation](https://www.vaultproject.io/docs/) is remarkably
+good. Here are a few notes on terminology that don't jump right off the page
+the first time you thread through those docs.
+
+### Mount point vs path vs key
+
+Vault has a whole bunch of pluggable functionality, and it is up to you to
+enable the features (e.g. auth methods, secrets engines) that you want. When
+you enable a  feature, you assign it to a **mount point**, a path on the Vault
+API that will serve as the root path for the API of that feature. For example,
+you could enable a [key-value secrets
+engine](https://www.vaultproject.io/docs/secrets/kv/kv-v2.html) at the mount
+point ``hopes-and-dreams/``; when [reading/writing
+data](https://www.vaultproject.io/docs/secrets/kv/kv-v2.html#writing-reading-arbitrary-data),
+for example, you would read and write to ``hopes-and-dreams/my-secret-key``.
+
+```bash
+vault kv put hopes-and-dreams/my-secret-key my-value=s3cr3t
+```
+
+The **path** is the name of the secret relative to that mount point. So,
+``my-secret-key`` in the example above is the path. Since kv secrets can
+have more than one set of values, **key** refers to the key inside the secret
+at path that contains the value of interest.
+
+
 ## Usage examples
 
 ### In an arXiv Flask application
