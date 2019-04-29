@@ -182,7 +182,19 @@ class SecretsManager:
         return secret
 
     def yield_secrets(self, tok: str, role: str) -> Iterable[Tuple[str, str]]:
-        """Generate config var + secret tuples."""
+        """
+        Generate config var + secret tuples.
+
+        Parameters
+        ----------
+        token : str
+            Token for authenticating with Vault. For example, the Kubernetes
+            ServiceAccount token used to authenticate with the Kubernetes
+            auth method.
+        role : str
+            The name of the Vault role associated with the token.
+
+        """
         # Make sure that we have a current authentication with vault.
         if not self.vault.authenticated:
             self.vault.authenticate(tok, role)

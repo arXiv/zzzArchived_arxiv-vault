@@ -31,7 +31,13 @@ class TestGetSecretsNotAuthenticated(TestCase):
                                                  'foolease-1234', 1234, True)
         secrets = manager.SecretsManager(self.vault, requests)
 
-        yields = {k: v for k, v in secrets.yield_secrets('tôken', 'röle')}
+        # Auth token and role for the configured authentication method; in this
+        # case we have only implemented support for the Kubernetes auth method
+        # since that is what we are using.
+        auth_token = 'tôken'
+        auth_role = 'röle'
+        yields = {k: v for k, v
+                  in secrets.yield_secrets(auth_token, auth_role)}
         self.assertEqual(yields['GENERIC_FOO'], 'foosecret')
         self.assertEqual(self.vault.generic.call_count, 1)
         self.assertEqual(self.vault.authenticate.call_count, 1)
