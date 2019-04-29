@@ -23,7 +23,8 @@ to them, monitors the passage of time relative to the lease duration on each
 secret that it retrieves, and automatically refresh the credential(s) as
 needed.
 
-To use this in WSGI applications, we should also provide a WSGI middleware.
+So that we can easily use this package in WSGI applications, it should also
+provide a WSGI middleware.
 
 ## Installation
 
