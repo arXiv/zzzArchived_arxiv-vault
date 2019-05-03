@@ -12,7 +12,7 @@ import logging
 from .core import Vault, Secret
 
 logger = logging.getLogger(__name__)
-logger.propagate = False
+logger.setLevel(int(os.environ.get('LOGLEVEL', 40)))
 
 MYSQL = 'mysql'
 
@@ -170,13 +170,17 @@ class SecretsManager:
 
     def _get_secret(self, request: SecretRequest) -> Secret:
         """Get a secret for a :class:`.SecretRequest`."""
+        logger.debug('Get secret for request %s', request.name)
         secret = self.secrets.get(request.name, None)
         if self._is_stale(request, secret):
+            logger.debug('Secret is stale; get a fresh one')
             secret = self._fresh_secret(request)
         elif self._about_to_expire(secret):
             if secret.renewable:
+                logger.debug('Secret is about to expire; try to renew')
                 secret = self.vault.renew(secret)
             else:
+                logger.debug('Secret is about to expire; get a fresh one')
                 secret = self._fresh_secret(request)
         self.secrets[request.name] = secret
         return secret

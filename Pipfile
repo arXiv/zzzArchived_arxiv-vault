@@ -11,7 +11,8 @@ coveralls = "*"
 pylint = "*"
 pydocstyle = "*"
 mypy = "*"
-arxiv-base = "==0.15.6"
+arxiv-base = "==0.15.7rc8"
+sphinx-autodoc-typehints = "*"
 wheel = "*"
 sphinx = "*"
 
@@ -20,7 +21,6 @@ hvac = "*"
 arxiv-vault = {path = "."}
 dataclasses = "*"
 urllib3 = ">=1.24.2"
-sphinx-autodoc-typehints = "*"
 
 [requires]
 python_version = "3.6"

@@ -1,6 +1,7 @@
 """Provides simple Vault API client."""
 
 from typing import Dict, Any, Optional, Union
+import os
 from pytz import UTC
 from datetime import datetime, timedelta
 from http import HTTPStatus
@@ -13,7 +14,7 @@ from .adapter import HostnameLiberalAdapter
 
 import logging
 logger = logging.getLogger(__name__)
-logger.propagate = False
+logger.setLevel(int(os.environ.get('LOGLEVEL', 40)))
 
 
 class Secret:
@@ -123,6 +124,8 @@ class Vault:
         """Renew a :class:`.Secret`."""
         if not secret.renewable:
             raise RuntimeError('Secret lease is not renewable')
+        logger.debug('Renew secret %s for another %i seconds',
+                     secret.lease_id, increment)
         data = self._client.sys.renew_lease(lease_id=secret.lease_id,
                                             increment=increment)
         try:    # This may not be everything that we asked for.
@@ -130,6 +133,8 @@ class Vault:
             secret.renewable = data['data']['renewable']
         except KeyError as e:
             raise RuntimeError('Could not use response') from e
+        logger.debug('Secret %s renewed for another %i seconds',
+                     secret.lease_id, secret.lease_duration)
         return secret
 
     def generic(self, path: str, key: str,
@@ -199,8 +204,9 @@ class Vault:
         -------
         :class:`.Secret`
 
-
         """
+        logger.debug('Obtain an AWS credential for role %s at %s',
+                     role, mount_point)
         data = self._client.secrets.aws.generate_credentials(
             name=role,
             mount_point=mount_point
@@ -213,5 +219,7 @@ class Vault:
             renewable = data['renewable']
         except KeyError as e:
             raise RuntimeError('Could not use response') from e
+        logger.debug('Obtained credential for role %s with lease %s expiring'
+                     ' in %i seconds', role, lease_id, lease_duration)
         return Secret((aws_access_key_id, aws_secret_access_key),
                       datetime.now(UTC), lease_id, lease_duration, renewable)
