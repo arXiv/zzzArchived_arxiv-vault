@@ -7,8 +7,7 @@ from functools import partial
 import os
 import warnings
 
-import logging
-
+from .util import getLogger
 from .core import Vault, Secret
 from .manager import SecretsManager, SecretRequest, ConfigManager
 
@@ -24,8 +23,7 @@ warnings.formatwarning = formatwarning
 
 WSGIRequest = Tuple[dict, Callable]
 
-logger = logging.getLogger(__name__)
-logger.propagate = False
+logger = getLogger(__name__)
 
 
 class VaultMiddleware:

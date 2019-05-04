@@ -9,12 +9,12 @@ import requests
 from json.decoder import JSONDecodeError
 
 import hvac
+from hvac.adapters import Request as RequestAdapter
 from .hvac_extensions import Client
 from .adapter import HostnameLiberalAdapter
+from .util import getLogger
 
-import logging
-logger = logging.getLogger(__name__)
-logger.setLevel(int(os.environ.get('LOGLEVEL', 40)))
+logger = getLogger(__name__)
 
 
 class Secret:
@@ -56,6 +56,8 @@ class Secret:
         """Check whether the token is expired (as of ``as_of``)."""
         if as_of is None:
             as_of = datetime.now(UTC)
+        logger.debug('Secret expires at %s; will be expired as of %s?',
+                     as_of.isoformat(), self.expires.isoformat())
         return as_of >= self.expires
 
 
@@ -87,8 +89,10 @@ class Vault:
             path to a certificate bundle used to verify the server certificate.
 
         """
-        self._client = Client(url=f'{scheme}://{host}:{port}',
-                              adapter=HostnameLiberalAdapter,
+        adapter = RequestAdapter
+        if scheme == 'https':
+            adapter = HostnameLiberalAdapter
+        self._client = Client(url=f'{scheme}://{host}:{port}', adapter=adapter,
                               verify=verify)
 
     @property

@@ -1,18 +1,16 @@
 """Provides :class:`.SecretsManager`."""
 
 from typing import List, Dict, Tuple, Iterable, Optional, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import os
 from datetime import datetime, timedelta
 import copy
 from pytz import UTC
 
-import logging
-
+from .util import getLogger
 from .core import Vault, Secret
 
-logger = logging.getLogger(__name__)
-logger.setLevel(int(os.environ.get('LOGLEVEL', 40)))
+logger = getLogger(__name__)
 
 MYSQL = 'mysql'
 
@@ -41,7 +39,7 @@ class AWSSecretRequest(SecretRequest):
     role: str
     """An AWS role that has been pre-configured with IAM policies in Vault."""
 
-    mount_point: str = 'aws/'
+    mount_point: str = field(default='aws/')
     """Path where the AWS secrets engine is mounted."""
 
 
@@ -73,7 +71,7 @@ class DatabaseSecretRequest(SecretRequest):
     params: str
     """Param-part of the database URI connection string."""
 
-    mount_point: str = 'database/'
+    mount_point: str = field(default='database/')
     """Path where the database secrets engine is mounted."""
 
 
@@ -89,10 +87,10 @@ class GenericSecretRequest(SecretRequest):
     key: str
     """Key within the secret."""
 
-    mount_point: str = 'secret/'
+    mount_point: str = field(default='secret/')
     """Mount point of the KV engine."""
 
-    minimum_ttl: int = 0
+    minimum_ttl: int = field(default=0)
     """Renewal will be attempted no more frequently than ``minimum_ttl``."""
 
 
@@ -122,7 +120,7 @@ class SecretsManager:
     """
 
     def __init__(self, vault: Vault, requests: List[SecretRequest],
-                 expiry_margin: int = 300) -> None:
+                 expiry_margin: int = 30) -> None:
         """Initialize a new manager with :class:`.Vault` connection."""
         self.vault = vault
         self.requests = requests
@@ -131,7 +129,12 @@ class SecretsManager:
 
     def _about_to_expire(self, secret: Secret) -> bool:
         """Check if a secret is about to expire within `margin` seconds."""
-        return secret.is_expired(datetime.now(UTC) + self.expiry_margin)
+        now = datetime.now(UTC)
+        as_of = now + self.expiry_margin
+        logger.debug('Is secret %s about to expire? Current time is %s,'
+                     ' include margin of %s, and check expiry as of %s',
+                     secret, now, self.expiry_margin, as_of)
+        return secret.is_expired(as_of)
 
     def _format_database(self, request: DatabaseSecretRequest,
                          secret: Secret) -> str:

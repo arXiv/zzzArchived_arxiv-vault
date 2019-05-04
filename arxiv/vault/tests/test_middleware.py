@@ -106,6 +106,7 @@ class TestWithRealResponse(TestCase):
             1,
             "Only one request should be made, since the TTL has not passed"
         )
+        self.assertEqual(mClient.return_value.sys.renew_lease.call_count, 0)
 
     @mock.patch(f'{core.__name__}.Client')
     def test_request_with_short_tll(self, mClient):
