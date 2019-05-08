@@ -129,11 +129,9 @@ class SecretsManager:
 
     def _about_to_expire(self, secret: Secret) -> bool:
         """Check if a secret is about to expire within `margin` seconds."""
-        now = datetime.now(UTC)
-        as_of = now + self.expiry_margin
-        logger.debug('Is secret %s about to expire? Current time is %s,'
-                     ' include margin of %s, and check expiry as of %s',
-                     secret, now, self.expiry_margin, as_of)
+        as_of = datetime.now(UTC) + self.expiry_margin
+        logger.debug('Check lease %s expiry as of %s (%s seconds from now)',
+                     secret.lease_id, as_of, self.expiry_margin)
         return secret.is_expired(as_of)
 
     def _format_database(self, request: DatabaseSecretRequest,
