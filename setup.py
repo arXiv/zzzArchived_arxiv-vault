@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='arxiv-vault',
-    version='0.1.1rc11',
+    version='0.1.1rc12',
     packages=[f'arxiv.{package}' for package in find_packages('arxiv')],
     zip_safe=False,
     install_requires=[
