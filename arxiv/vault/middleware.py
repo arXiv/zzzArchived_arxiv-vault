@@ -61,6 +61,33 @@ class VaultMiddleware:
         self.secrets = ConfigManager(self.config)
         self.wsgi_app = self
 
+    def update_secrets(self, environ: dict) -> dict:
+        """
+        Make sure that our secrets are up to date.
+
+        Checks for fresh secrets, and updates ``environ`` and the current
+        config accordingly.
+
+        Parameters
+        ----------
+        environ : dict
+            WSGI environ mapping into which secrets should be injected.
+
+        Returns
+        -------
+        dict
+            Updated ``environ`` mapping.
+
+        """
+        logger.debug('Yield secrets from %s', self.secrets)
+        for key, value in self.secrets.yield_secrets():
+            logger.debug('Got secret %s', key)
+            if environ.get(key) != value:
+                warnings.warn(f'Updating {key} with a new value')
+            environ[key] = value
+            self.config[key] = value
+        return environ
+
     def __call__(self, environ: dict, start_response: Callable) -> Iterable:
         """
         Make sure that all of our secrets are up to date.
@@ -80,12 +107,6 @@ class VaultMiddleware:
             https://www.python.org/dev/peps/pep-0333/#the-application-framework-side
 
         """
-        logger.debug('Yield secrets from %s', self.secrets)
-        for key, value in self.secrets.yield_secrets():
-            logger.debug('Got secret %s', key)
-            if environ.get(key) != value:
-                warnings.warn(f'Updating {key} with a new value')
-            environ[key] = value
-            self.config[key] = value
-        response: Iterable = self.app(environ, start_response)
+        response: Iterable = self.app(self.update_secrets(environ),
+                                      start_response)
         return response

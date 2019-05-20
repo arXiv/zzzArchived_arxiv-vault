@@ -14,7 +14,7 @@ class TestGetSecretsNotAuthenticated(TestCase):
 
     def setUp(self):
         """We have a :class:`.Vault` connection and are not authenticated."""
-        self.vault = mock.MagicMock(authenticated=False)
+        self.vault = mock.MagicMock(is_authenticated=False)
 
     def test_generic_request(self):
         """The app requires a generic secret."""
@@ -48,7 +48,7 @@ class TestGetSecrets(TestCase):
 
     def setUp(self):
         """We have a :class:`.Vault` connection and are authenticated."""
-        self.vault = mock.MagicMock(authenticated=True)
+        self.vault = mock.MagicMock(is_authenticated=True)
 
     def test_generic_request(self):
         """The app requires a generic secret."""
@@ -80,11 +80,9 @@ class TestGetSecrets(TestCase):
                          '...the lease expires, or...')
 
         secrets.secrets['GENERIC_FOO'].lease_duration \
-            = secrets.expiry_margin.total_seconds() - 5
-        self.assertTrue(
-            secrets._about_to_expire(secrets.secrets['GENERIC_FOO']),
-            '...the secret lease is about to expire...'
-        )
+            = secrets._expiry_margin.total_seconds() - 5
+        self.assertTrue(secrets.secrets['GENERIC_FOO'].is_about_to_expire(),
+                        '...the secret lease is about to expire...')
         yields = {k: v for k, v in secrets.yield_secrets('tôken', 'röle')}
         self.assertEqual(self.vault.renew.call_count, 1,
                          'in which case we attempt to renew the lease.')
@@ -177,9 +175,9 @@ class TestGetSecrets(TestCase):
                          '...the lease expires.')
 
         secrets.secrets['FOO_CREDENTIALS'].lease_duration \
-            = secrets.expiry_margin.total_seconds() - 5
+            = secrets._expiry_margin.total_seconds() - 5
         self.assertTrue(
-            secrets._about_to_expire(secrets.secrets['FOO_CREDENTIALS']),
+            secrets.secrets['FOO_CREDENTIALS'].is_about_to_expire(),
             '...the secret lease is about to expire...'
         )
         yields = {k: v for k, v in secrets.yield_secrets('tôken', 'röle')}
@@ -222,12 +220,12 @@ class TestGetSecrets(TestCase):
                          '...the lease expires.')
 
         secrets.secrets['FOO_DATABASE_URI'].lease_duration \
-            = secrets.expiry_margin.total_seconds() - 5
+            = secrets._expiry_margin.total_seconds() - 5
         self.vault.renew.return_value = Secret(('user', 'pass'),
                                                datetime.now(UTC),
                                                'foolease-1234', 1234, True)
         self.assertTrue(
-            secrets._about_to_expire(secrets.secrets['FOO_DATABASE_URI']),
+            secrets.secrets['FOO_DATABASE_URI'].is_about_to_expire(),
             '...the secret lease is about to expire...'
         )
         yields = {k: v for k, v in secrets.yield_secrets('tôken', 'röle')}

@@ -11,10 +11,11 @@ coveralls = "*"
 pylint = "*"
 pydocstyle = "*"
 mypy = "*"
-arxiv-base = "==0.15.7rc8"
+arxiv-base = ">=0.15.7rc8"
 sphinx-autodoc-typehints = "*"
 wheel = "*"
 sphinx = "*"
+retry = ">=0.9.2"
 
 [packages]
 hvac = "*"

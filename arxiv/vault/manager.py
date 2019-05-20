@@ -9,89 +9,12 @@ from pytz import UTC
 
 from .util import getLogger
 from .core import Vault, Secret
+from .domain import SecretRequest, AWSSecretRequest, DatabaseSecretRequest, \
+    GenericSecretRequest
 
 logger = getLogger(__name__)
 
 MYSQL = 'mysql'
-
-
-@dataclass
-class SecretRequest:
-    """Represents a request for a secret from Vault."""
-
-    name: str
-
-    @classmethod
-    def factory(cls, request_type: str, **data: str) -> 'SecretRequest':
-        """Genereate a request of the appropriate type."""
-        for klass in cls.__subclasses__():
-            if klass.slug == request_type:
-                return klass(**data)
-        raise ValueError('No such request type')
-
-
-@dataclass
-class AWSSecretRequest(SecretRequest):
-    """Represents a request for AWS credentials."""
-
-    slug = "aws"
-
-    role: str
-    """An AWS role that has been pre-configured with IAM policies in Vault."""
-
-    mount_point: str = field(default='aws/')
-    """Path where the AWS secrets engine is mounted."""
-
-
-@dataclass
-class DatabaseSecretRequest(SecretRequest):
-    """Represents a request for database credentials."""
-
-    slug = "database"
-
-    role: str
-    """Name of the database role for which to obtain credentials."""
-
-    engine: str
-    """
-    Database dialect for which secret is required, e.g. ``mysql+mysqldb``.
-
-    See https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls
-    """
-
-    host: str
-    """Hostname of the database server."""
-
-    port: str
-    """Port number of the database server."""
-
-    database: str
-    """Name of the database."""
-
-    params: str
-    """Param-part of the database URI connection string."""
-
-    mount_point: str = field(default='database/')
-    """Path where the database secrets engine is mounted."""
-
-
-@dataclass
-class GenericSecretRequest(SecretRequest):
-    """Represents a request for a generic (kv) secret."""
-
-    slug = "generic"
-
-    path: str
-    """Path to the secret."""
-
-    key: str
-    """Key within the secret."""
-
-    mount_point: str = field(default='secret/')
-    """Mount point of the KV engine."""
-
-    minimum_ttl: int = field(default=0)
-    """Renewal will be attempted no more frequently than ``minimum_ttl``."""
 
 
 class SecretsManager:
@@ -125,14 +48,7 @@ class SecretsManager:
         self.vault = vault
         self.requests = requests
         self.secrets: Dict[str, Secret] = {}
-        self.expiry_margin = timedelta(seconds=expiry_margin)
-
-    def _about_to_expire(self, secret: Secret) -> bool:
-        """Check if a secret is about to expire within `margin` seconds."""
-        as_of = datetime.now(UTC) + self.expiry_margin
-        logger.debug('Check lease %s expiry as of %s (%s seconds from now)',
-                     secret.lease_id, as_of, self.expiry_margin)
-        return secret.is_expired(as_of)
+        self._expiry_margin = timedelta(seconds=expiry_margin)
 
     def _format_database(self, request: DatabaseSecretRequest,
                          secret: Secret) -> str:
@@ -156,18 +72,11 @@ class SecretsManager:
                                         request.mount_point)
         return secret
 
-    def _can_freshen(self, request: SecretRequest, secret: Secret) -> bool:
-        """Enforce minimum TTL."""
-        if not hasattr(request, 'minimum_ttl'):
-            return True
-        age = (datetime.now(UTC) - secret.issued).total_seconds()
-        return age >= request.minimum_ttl
-
     def _is_stale(self, request: SecretRequest,
                   secret: Optional[Secret]) -> bool:
         """Determine whether or not a secret requires renewal."""
         return secret is None or \
-            (secret.is_expired() and self._can_freshen(request, secret))
+            (secret.is_expired() and secret.age > (request.minimum_ttl or 0))
 
     def _get_secret(self, request: SecretRequest) -> Secret:
         """Get a secret for a :class:`.SecretRequest`."""
@@ -176,7 +85,7 @@ class SecretsManager:
         if self._is_stale(request, secret):
             logger.debug('Secret is stale; get a fresh one')
             secret = self._fresh_secret(request)
-        elif self._about_to_expire(secret):
+        elif secret.is_about_to_expire(self._expiry_margin):
             if secret.renewable:
                 logger.debug('Secret is about to expire; try to renew')
                 secret = self.vault.renew(secret)
@@ -201,7 +110,7 @@ class SecretsManager:
 
         """
         # Make sure that we have a current authentication with vault.
-        if not self.vault.authenticated:
+        if not self.vault.is_authenticated:
             self.vault.authenticate(tok, role)
 
         for request in self.requests:
