@@ -123,6 +123,8 @@ class SecretsManager:
         """
         # Make sure that we have a current authentication with vault.
         if not self.vault.is_authenticated:
+            # TODO: move this so that it is only called if we actually need to
+            # get something from Vault. Otherwise we spam the token endpoint.
             self.vault.authenticate(tok, role)
 
         for request in self.requests:
