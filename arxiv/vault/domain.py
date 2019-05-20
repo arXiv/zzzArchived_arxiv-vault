@@ -121,6 +121,10 @@ class AWSSecretRequest(SecretRequest):
     minimum_ttl: int = field(default=0)
     """Renewal will be attempted no more frequently than ``minimum_ttl``."""
 
+    def __repr__(self) -> str:
+        """Get the string representation of this secret request."""
+        return f'{self.slug}:{self.mount_point}:{self.role}'
+
 
 @dataclass
 class DatabaseSecretRequest(SecretRequest):
@@ -156,6 +160,10 @@ class DatabaseSecretRequest(SecretRequest):
     minimum_ttl: int = field(default=0)
     """Renewal will be attempted no more frequently than ``minimum_ttl``."""
 
+    def __repr__(self) -> str:
+        """Get the string representation of this secret request."""
+        return f'{self.slug}:{self.mount_point}:{self.engine}:{self.role}'
+
 
 @dataclass
 class GenericSecretRequest(SecretRequest):
@@ -174,3 +182,7 @@ class GenericSecretRequest(SecretRequest):
 
     minimum_ttl: int = field(default=0)
     """Renewal will be attempted no more frequently than ``minimum_ttl``."""
+
+    def __repr__(self) -> str:
+        """Get the string representation of this secret request."""
+        return f'{self.slug}:{self.mount_point}:{self.path}:{self.key}'

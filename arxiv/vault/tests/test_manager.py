@@ -113,7 +113,7 @@ class TestGetSecrets(TestCase):
 
         time.sleep(2)
         yields = {k: v for k, v in secrets.yield_secrets('tôken', 'röle')}
-        self.assertEqual(self.vault.renew.call_count, 1)
+        self.assertEqual(self.vault.renew.call_count, 0)
         self.assertEqual(self.vault.generic.call_count, 2,
                          '...the minimum TTL has passed.')
 

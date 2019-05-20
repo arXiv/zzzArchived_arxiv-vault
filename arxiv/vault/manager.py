@@ -82,15 +82,27 @@ class SecretsManager:
         """Get a secret for a :class:`.SecretRequest`."""
         logger.debug('Get secret for request %s', request.name)
         secret = self.secrets.get(request.name, None)
+
+        # A stale secret is either expired, or has no TTL and the minimum TTL
+        # (defined on the secret request) has passed.
         if self._is_stale(request, secret):
-            logger.debug('Secret is stale; get a fresh one')
+            logger.debug('%s is stale; get a fresh one', request)
             secret = self._fresh_secret(request)
+
+        # We want to anticipate imminent expiration, and either renew or get
+        # a new secret before we run into problems.
         elif secret.is_about_to_expire(self._expiry_margin):
-            if secret.renewable:
-                logger.debug('Secret is about to expire; try to renew')
+            # If minimum_ttl is set, we want to honor that constraint even
+            # if the secret has expired or will expire..
+            if secret.age <= (request.minimum_ttl or 0):
+                logger.debug('%s about to expire; min TTL not passed', request)
+                pass
+
+            elif secret.renewable:
+                logger.debug('%s is about to expire; try to renew', request)
                 secret = self.vault.renew(secret)
             else:
-                logger.debug('Secret is about to expire; get a fresh one')
+                logger.debug('%s is about to expire; get a fresh one', request)
                 secret = self._fresh_secret(request)
         self.secrets[request.name] = secret
         return secret
