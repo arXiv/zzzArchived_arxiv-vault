@@ -15,7 +15,7 @@ class TestAuthenticate(TestCase):
 
     def test_is_not_authenticated(self):
         """The client is not authenticated at first."""
-        self.assertFalse(self.client.is_authenticated)
+        self.assertFalse(self.client.is_authenticated())
 
     @mock.patch('requests.Session.send')
     def test_authenticate(self, mock_send):
@@ -27,7 +27,7 @@ class TestAuthenticate(TestCase):
             )
         )
         self.client.authenticate('footoken', 'foo-service-role')
-        self.assertTrue(self.client.is_authenticated)
+        self.assertTrue(self.client.is_authenticated())
 
     @mock.patch('requests.Session.send')
     def test_cannot_authenticate(self, mock_send):
@@ -38,7 +38,7 @@ class TestAuthenticate(TestCase):
         )
         with self.assertRaises(hvac.exceptions.Forbidden):
             self.client.authenticate('footoken', 'foo-service-role')
-        self.assertFalse(self.client.is_authenticated)
+        self.assertFalse(self.client.is_authenticated())
 
 
 class TestRenew(TestCase):

@@ -14,7 +14,9 @@ class TestGetSecretsNotAuthenticated(TestCase):
 
     def setUp(self):
         """We have a :class:`.Vault` connection and are not authenticated."""
-        self.vault = mock.MagicMock(is_authenticated=False)
+        self.vault = mock.MagicMock(
+            is_authenticated=mock.MagicMock(return_value=False)
+        )
 
     def test_generic_request(self):
         """The app requires a generic secret."""
@@ -48,7 +50,9 @@ class TestGetSecrets(TestCase):
 
     def setUp(self):
         """We have a :class:`.Vault` connection and are authenticated."""
-        self.vault = mock.MagicMock(is_authenticated=True)
+        self.vault = mock.MagicMock(
+            is_authenticated=mock.MagicMock(return_value=True)
+        )
 
     def test_generic_request(self):
         """The app requires a generic secret."""

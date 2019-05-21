@@ -49,6 +49,8 @@ class SecretsManager:
         self.requests = requests
         self.secrets: Dict[str, Secret] = {}
         self._expiry_margin = timedelta(seconds=expiry_margin)
+        # Use this flag to limit auth checks.
+        self._has_checked_authentication = False
 
     def _format_database(self, request: DatabaseSecretRequest,
                          secret: Secret) -> str:
@@ -57,6 +59,19 @@ class SecretsManager:
         return f'{request.engine}://{username}:{password}@' \
                f'{request.host}:{request.port}/{request.database}?' \
                f'{request.params}'
+
+    def _check_authentication(self, token: str, role: str) -> None:
+        """
+        Make sure that we are authenticated with vault.
+
+        The flag ``_has_checked_authentication`` is used to avoid making too
+        many extraneous auth checks to Vault, e.g. when we are renewing
+        multiple secrets in very close succession.
+        """
+        if self._has_checked_authentication:
+            return
+        self.vault.authenticate(token, role)
+        self._has_checked_authentication = True
 
     def _fresh_secret(self, request: SecretRequest) -> Secret:
         """Get a brand new secret."""
@@ -78,7 +93,8 @@ class SecretsManager:
         return secret is None or \
             (secret.is_expired() and secret.age > (request.minimum_ttl or 0))
 
-    def _get_secret(self, request: SecretRequest) -> Secret:
+    def _get_secret(self, request: SecretRequest, token: str, role: str) \
+            -> Secret:
         """Get a secret for a :class:`.SecretRequest`."""
         logger.debug('Get secret for request %s', request.name)
         secret = self.secrets.get(request.name, None)
@@ -87,11 +103,18 @@ class SecretsManager:
         # (defined on the secret request) has passed.
         if self._is_stale(request, secret):
             logger.debug('%s is stale; get a fresh one', request)
+            # Make sure that we have a current authentication with vault.
+            if not self.vault.is_authenticated():
+                self._check_authentication(token, role)
             secret = self._fresh_secret(request)
 
         # We want to anticipate imminent expiration, and either renew or get
         # a new secret before we run into problems.
         elif secret.is_about_to_expire(self._expiry_margin):
+            # Make sure that we have a current authentication with vault.
+            if not self.vault.is_authenticated():
+                self._check_authentication(token, role)
+
             # If minimum_ttl is set, we want to honor that constraint even
             # if the secret has expired or will expire..
             if secret.age <= (request.minimum_ttl or 0):
@@ -121,14 +144,13 @@ class SecretsManager:
             The name of the Vault role associated with the token.
 
         """
-        # Make sure that we have a current authentication with vault.
-        if not self.vault.is_authenticated:
-            # TODO: move this so that it is only called if we actually need to
-            # get something from Vault. Otherwise we spam the token endpoint.
-            self.vault.authenticate(tok, role)
-
+        # We only want to check our auth status against the Vault API once per
+        # call to yield_secrets(); otherwise we end up spamming the API for no
+        # good reason. ._check_authentication(...) can use this flag to
+        # evaluate whether or not an auth check is warranted.
+        self._has_checked_authentication = False
         for request in self.requests:
-            secret = self._get_secret(request)
+            secret = self._get_secret(request, tok, role)
             if type(request) is AWSSecretRequest:
                 yield 'AWS_ACCESS_KEY_ID', secret.value[0]
                 yield 'AWS_SECRET_ACCESS_KEY', secret.value[1]

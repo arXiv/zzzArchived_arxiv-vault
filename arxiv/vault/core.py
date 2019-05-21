@@ -54,7 +54,7 @@ class Vault:
             raise RuntimeError('No client; must authenticate')
         return self._client
 
-    @property
+    # This involves an API call to Vault, so should not be a property.
     def is_authenticated(self) -> bool:
         """Indicate whether or not we are authenticated with Vault."""
         return bool(self._client.is_authenticated())
