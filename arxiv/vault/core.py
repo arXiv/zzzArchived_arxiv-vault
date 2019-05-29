@@ -59,7 +59,9 @@ class Vault:
         """Indicate whether or not we are authenticated with Vault."""
         return bool(self._client.is_authenticated())
 
-    @retry(exceptions=ConnectionResetError, tries=30, backoff=2)
+    @retry(exceptions=(ConnectionResetError, ConnectionError,
+                       requests.exceptions.ConnectionError),
+           tries=30, backoff=2)
     def authenticate(self, kube_token: str, role: str) -> None:
         """
         Authenticate using a Kubernetes token, and obtain a Vault token.
@@ -77,7 +79,9 @@ class Vault:
         self._client.auth_kubernetes(role, kube_token,
                                      mount_point=self.kubernetes_mountpoint)
 
-    @retry(exceptions=ConnectionResetError, tries=30, backoff=2)
+    @retry(exceptions=(ConnectionResetError, ConnectionError,
+                       requests.exceptions.ConnectionError),
+           tries=30, backoff=2)
     def renew(self, secret: Secret, increment: int = 3600) -> Secret:
         """Renew a :class:`.Secret`."""
         if not secret.renewable:
@@ -96,7 +100,9 @@ class Vault:
                      secret.lease_id, secret.lease_duration)
         return secret
 
-    @retry(exceptions=ConnectionResetError, tries=30, backoff=2)
+    @retry(exceptions=(ConnectionResetError, ConnectionError,
+                       requests.exceptions.ConnectionError),
+           tries=30, backoff=2)
     def generic(self, path: str, key: str,
                 mount_point: str = 'secret/') -> Secret:
         """
@@ -124,7 +130,9 @@ class Vault:
                       data['lease_duration'],
                       data['renewable'])
 
-    @retry(exceptions=ConnectionResetError, tries=30, backoff=2)
+    @retry(exceptions=(ConnectionResetError, ConnectionError,
+                       requests.exceptions.ConnectionError),
+           tries=30, backoff=2)
     def mysql(self, role: str, mount_point: str) -> Secret:
         """
         Get a MySQL secret.
@@ -150,7 +158,9 @@ class Vault:
                       data['lease_duration'],
                       data['renewable'])
 
-    @retry(exceptions=ConnectionResetError, tries=30, backoff=2)
+    @retry(exceptions=(ConnectionResetError, ConnectionError,
+                       requests.exceptions.ConnectionError),
+           tries=30, backoff=2)
     def aws(self, role: str, mount_point: str) -> Secret:
         """
         Obtain an AWS credential.

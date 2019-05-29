@@ -7,7 +7,6 @@ from functools import partial
 import os
 import warnings
 
-from .util import getLogger
 from .core import Vault, Secret
 from .manager import SecretsManager, SecretRequest, ConfigManager
 
@@ -22,8 +21,6 @@ def formatwarning(message, category, filepath, lineno, line=None):
 warnings.formatwarning = formatwarning
 
 WSGIRequest = Tuple[dict, Callable]
-
-logger = getLogger(__name__)
 
 
 class VaultMiddleware:
@@ -79,9 +76,7 @@ class VaultMiddleware:
             Updated ``environ`` mapping.
 
         """
-        logger.debug('Yield secrets from %s', self.secrets)
         for key, value in self.secrets.yield_secrets():
-            logger.debug('Got secret %s', key)
             if environ.get(key) != value:
                 warnings.warn(f'Updating {key} with a new value')
             environ[key] = value
